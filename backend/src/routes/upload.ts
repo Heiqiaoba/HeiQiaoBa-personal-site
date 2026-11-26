@@ -11,11 +11,12 @@ import { Errors } from '../lib/errors';
 
 export const UPLOAD_DIR = path.resolve(process.cwd(), 'uploads');
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
-const ALLOWED = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']);
+// 允许常见位图；不允许 SVG（可作为脚本载体导致存储型 XSS）
+const ALLOWED = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
 
 function extOf(filename: string): string {
   const ext = path.extname(filename).toLowerCase();
-  return ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'].includes(ext) ? ext : '.png';
+  return ['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext) ? ext : '.png';
 }
 
 export async function uploadRoutes(app: FastifyInstance) {

@@ -40,8 +40,9 @@ export function MarkdownEditor({ value, onChange, placeholder }: Props) {
         const { url } = await api.post<{ url: string }>('/upload', form, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
+        // 存相对路径而非绝对 URL：换域名/换部署环境时文章里的图片不会失效
         result.push({
-          url: new URL(url, window.location.origin).toString(),
+          url,
           alt: file.name,
           title: file.name,
         });

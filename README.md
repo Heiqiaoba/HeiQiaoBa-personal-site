@@ -22,20 +22,25 @@
 ## 首次启动
 
 ```bash
-# 后端依赖 + 数据库 + 迁移
+# 1. 生成环境变量（含强随机 BETTER_AUTH_SECRET）
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+
+# 2. 后端：依赖 + 数据库 + 迁移
 cd backend
 pnpm install
 docker compose up -d postgres
-pnpm db:generate      # 骨架已清空旧迁移，首次必须重新生成
-pnpm db:migrate
+pnpm db:migrate       # 迁移文件已随仓库提供，直接执行；仅改 schema 后才需 db:generate
 pnpm dev
 
-# 前端（另开终端）
+# 3. 前端（另开终端）
 cd ../frontend
 pnpm install
-cp .env.example .env  # 已生成，可按需修改
 pnpm dev
 ```
+
+> 仓库已提供迁移文件与作者账号初始化脚本，首次启动不需要 `db:generate`。
+> 作者账号：`cd backend && pnpm create-admin <email> <name> <password>`。
 
 ## 功能
 

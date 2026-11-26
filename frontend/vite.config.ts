@@ -25,6 +25,12 @@ export default defineConfig({
         target: 'http://localhost:3100',
         changeOrigin: true,
       },
+      // 图片上传后的静态资源：编辑器插入的 /uploads/* 必须代理到后端，
+      // 否则 Vite 会返回 index.html（状态 200 但 Content-Type: text/html，图片裂开）
+      '/uploads': {
+        target: 'http://localhost:3100',
+        changeOrigin: true,
+      },
     },
   },
   build: {
