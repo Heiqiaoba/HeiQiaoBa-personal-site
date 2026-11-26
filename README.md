@@ -1,4 +1,4 @@
-# HeiQiaoBa-personal-site
+# 黑巧笔记（HeiQiaoBa-personal-site）
 
 仓库：https://github.com/Heiqiaoba/HeiQiaoBa-personal-site
 

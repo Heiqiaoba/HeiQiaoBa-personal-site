@@ -1,7 +1,8 @@
 /**
- * 全局应用头部：展示项目名与会话操作区。
- * 由脚本从模板裁剪生成，已移除演示用的管理端入口。
+ * 全局应用头部：站名、语言切换与会话操作区。
+ * 站名与登录/退出文案走 i18n；已移除演示用的管理端入口。
  */
+import { useI18n } from '@/i18n';
 import { signOutAndClear, useSession } from '@/lib/auth-client';
 import { LogoutOutlined } from '@ant-design/icons';
 import { Button, Layout, Space, Typography } from 'antd';
@@ -12,22 +13,41 @@ const { Title, Text } = Typography;
 
 export function AppHeader() {
   const { data: session } = useSession();
+  const { t, lang, setLang } = useI18n();
   return (
-    <Header className="flex items-center justify-between !bg-white !px-6 !shadow-sm">
+    <Header className="flex items-center justify-between !border-b !border-black/5 !bg-white/90 !px-6 !shadow-none">
       <Link to="/" className="flex items-center gap-2">
-        <Title level={4} className="!m-0">HeiQiaoBa-personal-site</Title>
+        <Title level={4} className="!m-0 !font-semibold !tracking-tight">
+          {t('site.name')}
+        </Title>
       </Link>
-      <Space>
+      <Space size="small">
+        <Button
+          type="text"
+          size="small"
+          aria-label="switch language"
+          onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')}
+        >
+          {t('lang.switch')}
+        </Button>
         {session ? (
           <>
-            <Text type="secondary">{session.user.email}</Text>
-            <Button type="text" icon={<LogoutOutlined />} onClick={() => void signOutAndClear()}>
-              退出
+            <Text type="secondary" className="!hidden sm:!inline">
+              {session.user.email}
+            </Text>
+            <Button
+              type="text"
+              icon={<LogoutOutlined />}
+              onClick={() => void signOutAndClear()}
+            >
+              {t('nav.logout')}
             </Button>
           </>
         ) : (
           <Link to="/login">
-            <Button type="primary">登录 / 注册</Button>
+            <Button type="primary" size="small">
+              {t('nav.login')}
+            </Button>
           </Link>
         )}
       </Space>

@@ -10,6 +10,7 @@
  *    分别负责埋点初始化与 401 事件总线接线，最后才是业务根组件 App。
  * 此外 Root 调用 useTelemetryErrors 注册全局错误采集，与 ErrorBoundary 形成互补。
  */
+import { LangProvider } from '@/i18n';
 import { queryClient } from '@/lib/queryClient';
 import { useTelemetryErrors } from '@/lib/useTelemetryErrors';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -36,13 +37,15 @@ function Root() {
   return (
     <StrictMode>
       <ErrorBoundary>
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <TelemetryBootstrap />
-            <ApiAuthSync />
-            <App />
-          </BrowserRouter>
-        </QueryClientProvider>
+        <LangProvider>
+          <QueryClientProvider client={queryClient}>
+            <BrowserRouter>
+              <TelemetryBootstrap />
+              <ApiAuthSync />
+              <App />
+            </BrowserRouter>
+          </QueryClientProvider>
+        </LangProvider>
       </ErrorBoundary>
     </StrictMode>
   );
