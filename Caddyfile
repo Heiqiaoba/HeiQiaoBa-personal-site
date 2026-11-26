@@ -1,0 +1,13 @@
+# Caddy 自动 HTTPS：把域名替换成环境变量注入的值
+# 反代到前端 Nginx 容器（前端 Nginx 再反代 /api 和 /uploads 到后端）
+{$DOMAIN} {
+  reverse_proxy frontend:80
+
+  encode zstd gzip
+
+  header {
+    X-Content-Type-Options nosniff
+    X-Frame-Options DENY
+    Referrer-Policy strict-origin-when-cross-origin
+  }
+}

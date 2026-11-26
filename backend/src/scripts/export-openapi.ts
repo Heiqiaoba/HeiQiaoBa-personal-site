@@ -16,7 +16,8 @@ async function main() {
   const app = await buildApp();
   await app.ready();
   const spec = app.swagger();
-  mkdirSync(out.substring(0, out.lastIndexOf('/')), { recursive: true });
+  const dir = out.substring(0, out.lastIndexOf('/'));
+  if (dir) mkdirSync(dir, { recursive: true });
   writeFileSync(out, `${JSON.stringify(spec, null, 2)}\n`);
   console.log(`OpenAPI spec written to ${out}`);
   await app.close();

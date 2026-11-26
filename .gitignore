@@ -1,0 +1,10 @@
+# 生产环境密钥（示例文件 .env.production.example 是跟踪的）
+.env.production
+
+# 通用
+.DS_Store
+*.log
+node_modules/
+dist/
+
+backups/

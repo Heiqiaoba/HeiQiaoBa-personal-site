@@ -1,0 +1,92 @@
+# 完整生产编排：PostgreSQL + 后端 + 前端(Nginx) + Caddy(自动 HTTPS)
+#
+# 用法：
+#   1. cp .env.production.example .env.production 并填写域名与密钥
+#   2. docker compose --env-file .env.production up -d --build
+#
+# 说明：
+#   - 数据库与上传文件都用命名卷持久化，容器重建不丢数据
+#   - 后端启动前自动执行数据库迁移
+#   - Caddy 监听 80/443，自动申请并续期 Let's Encrypt 证书
+#   - 只有 Caddy 暴露端口，后端/数据库/前端都不直接暴露到公网
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: heiqiao-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?请在 .env.production 设置 POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-app}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: heiqiao-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-app}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?请在 .env.production 设置 BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: https://${DOMAIN:?请在 .env.production 设置 DOMAIN}
+      CORS_ORIGIN: https://${DOMAIN:?请在 .env.production 设置 DOMAIN}
+      ADMIN_USER_IDS: ${ADMIN_USER_IDS:-}
+      ENABLE_DOCS: ${ENABLE_DOCS:-false}
+      DOCS_TOKEN: ${DOCS_TOKEN:-}
+      DB_POOL_MAX: ${DB_POOL_MAX:-20}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    # 先迁移再启动；迁移幂等，可重复执行
+    command: sh -c "node dist/db/migrate.js && node dist/index.js"
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: heiqiao-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: heiqiao-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?请在 .env.production 设置 DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+
+volumes:
+  postgres_data:
+  uploads_data:
+  caddy_data:
+  caddy_config:

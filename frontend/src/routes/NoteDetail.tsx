@@ -6,6 +6,7 @@ import { useI18n } from '@/i18n';
 import { useNote, useNotes } from '@/api/notes';
 import { useIsAdmin } from '@/lib/useIsAdmin';
 import { ReadingProgress } from '@/components/ReadingProgress';
+import { useDocumentMeta } from '@/lib/useDocumentMeta';
 import { Button, Spin, Tag, Typography, message } from 'antd';
 import { marked } from 'marked';
 import { useEffect, useMemo, useState } from 'react';
@@ -84,6 +85,22 @@ export function NoteDetail() {
       next: idx >= 0 && idx < items.length - 1 ? items[idx + 1] : undefined,
     };
   }, [allNotes, note]);
+
+  useDocumentMeta({
+    title: note ? `${note.title} · 黑巧巴笔记` : '黑巧巴笔记',
+    description: note?.summary || undefined,
+    jsonLd: note
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'BlogPosting',
+          headline: note.title,
+          description: note.summary,
+          datePublished: note.publishedAt ?? note.createdAt,
+          dateModified: note.updatedAt,
+          author: { '@type': 'Person', name: '黑巧巴' },
+        }
+      : undefined,
+  });
 
   if (isLoading) return <div className="p-16 text-center"><Spin /></div>;
   if (isError || !note)

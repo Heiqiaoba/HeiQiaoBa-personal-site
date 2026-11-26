@@ -115,6 +115,26 @@
 | 5 | 归档、搜索、RSS、Giscus 评论 | 锦上添花 |
 | 6 | SEO / 预渲染 / 部署 | 上线 |
 
+## 六·补、SEO 现状与预渲染评估（2026-11-26）
+
+### 已做（基础 SEO）
+- `index.html` 静态 meta：title / description / OG / theme-color / canonical / WebSite JSON-LD
+- `useDocumentMeta` hook：文章详情页动态设置 title / description / BlogPosting JSON-LD
+- `public/robots.txt` + `public/sitemap.xml`（含固定路由，不含动态文章）
+
+### 局限
+SPA 的初始 HTML 是空壳，上述 meta 多数由 JS 注入。Google/Bing 能执行 JS 并识别，但：
+- 微信/微博/Twitter 等社交分享预览通常**不执行 JS**，拿不到动态 meta
+- 百度等部分爬虫对 JS 渲染支持有限
+- sitemap 无法自动包含新增文章
+
+### 彻底方案（以后再做）
+1. **构建时预渲染**：用 `vite-plugin-ssr` 或 `react-snap`，在 `pnpm build` 时为每个已知 slug 生成静态 HTML
+2. **服务端渲染**：迁 Next.js / Remix，成本较高
+3. **折中**：部署时用无头浏览器（prerender.io 类服务）给爬虫返回渲染后 HTML
+
+对个人博客，建议先从"基础 SEO"起步；若未来文章要被搜索引擎大量收录，再上预渲染。
+
 ## 七、待确认
 
 - 笔记正文用 Markdown 还是富文本？（建议 Markdown）

@@ -124,7 +124,7 @@ export async function buildApp() {
   if (env.ENABLE_DOCS) {
     await app.register(swagger, {
       openapi: {
-        info: { title: 'Template API', version: '0.1.0' },
+        info: { title: '黑巧巴笔记 API', version: '0.1.0' },
         servers: [{ url: env.BETTER_AUTH_URL }],
         components: {
           securitySchemes: {
