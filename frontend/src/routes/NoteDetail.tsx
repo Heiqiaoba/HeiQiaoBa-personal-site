@@ -7,6 +7,7 @@ import { useNote, useNotes } from '@/api/notes';
 import { useIsAdmin } from '@/lib/useIsAdmin';
 import { ReadingProgress } from '@/components/ReadingProgress';
 import { MarkdownView } from '@/components/MarkdownView';
+import { Comments } from '@/components/Comments';
 import { useDocumentMeta } from '@/lib/useDocumentMeta';
 import GithubSlugger from 'github-slugger';
 import { Button, Spin, Tag, Typography } from 'antd';
@@ -100,6 +101,9 @@ export function NoteDetail() {
                 {t('notes.date')}: {new Date(note.publishedAt).toLocaleDateString()}
               </span>
             )}
+            <span className="text-sm text-[color:var(--text-secondary)]">
+              {note.viewCount} {t('notes.views')}
+            </span>
           </div>
           {note.summary && (
             <Paragraph type="secondary" className="!border-l-[3px] !border-[color:var(--brand)] !pl-4 !text-base">
@@ -107,6 +111,7 @@ export function NoteDetail() {
             </Paragraph>
           )}
           <MarkdownView content={note.content} />
+          <Comments slug={note.slug} />
 
           {/* 上一篇/下一篇 */}
           <div className="mt-12 grid gap-4 border-t border-[color:var(--border)] pt-6 sm:grid-cols-2">

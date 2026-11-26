@@ -22,6 +22,22 @@ export function useNotes(query: Partial<NoteListQuery> = {}) {
   });
 }
 
+/** 图片管理（管理端） */
+export type StoredImage = { name: string; url: string; size: number; createdAt: string };
+export function useImages() {
+  return useQuery({
+    queryKey: ['images'],
+    queryFn: () => api.get<StoredImage[]>('/images'),
+  });
+}
+export function useDeleteImage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (name: string) => api.delete(`/images/${encodeURIComponent(name)}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['images'] }),
+  });
+}
+
 /** 标签列表（含已发布笔记计数） */
 type TagCount = { name: string; count: number };
 export function useTags() {

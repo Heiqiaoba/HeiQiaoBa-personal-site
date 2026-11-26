@@ -5,6 +5,7 @@
  * 用 antd Result 展示 500 页面并提供「重试」（清空 error 触发重新渲染），避免白屏。
  * 与 useTelemetryErrors 互补：那边负责采集上报，这里负责展示与恢复。
  */
+import { useI18n } from '@/i18n';
 import { Button, Result } from 'antd';
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 
@@ -18,7 +19,13 @@ interface State {
 }
 
 /** 全局错误边界：捕获渲染期异常，展示错误页而不是白屏 */
-export class ErrorBoundary extends Component<Props, State> {
+/** 函数包装：把 i18n 文案作为 props 传给 class 组件（class 不能直接用 hook） */
+export function ErrorBoundary(props: Props) {
+  const { t } = useI18n();
+  return <ErrorBoundaryInner {...props} labels={{ title: t('error.title'), retry: t('error.retry') }} />;
+}
+
+class ErrorBoundaryInner extends Component<Props & { labels: { title: string; retry: string } }, State> {
   override state: State = { error: null };
 
   /**
@@ -43,11 +50,11 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <Result
           status="500"
-          title="页面出错了"
+          title={this.props.labels.title}
           subTitle={this.state.error.message}
           extra={
             <Button type="primary" onClick={() => this.setState({ error: null })}>
-              重试
+              {this.props.labels.retry}
             </Button>
           }
         />

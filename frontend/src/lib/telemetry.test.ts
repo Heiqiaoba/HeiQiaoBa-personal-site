@@ -23,7 +23,7 @@ let uuidSeq = 0;
 vi.stubGlobal('sessionStorage', storageProxy);
 vi.stubGlobal('crypto', { randomUUID: () => `session-${++uuidSeq}` });
 vi.stubGlobal('navigator', { sendBeacon: vi.fn(() => true) });
-vi.stubGlobal('window', { location: { pathname: '/todos' }, addEventListener: vi.fn() });
+vi.stubGlobal('window', { location: { pathname: '/notes' }, addEventListener: vi.fn() });
 vi.stubGlobal('document', { visibilityState: 'visible' });
 let fetchMock = vi.fn(() => Promise.resolve({ ok: true }));
 vi.stubGlobal('fetch', fetchMock);
@@ -51,16 +51,16 @@ describe('telemetry', () => {
 
   it('tracks events with sanitized path and stable session id', async () => {
     const { telemetry } = await loadFresh();
-    telemetry.track('todo_create', { source: 'form' });
+    telemetry.track('note_create', { source: 'editor' });
     expect(telemetry.pending).toBe(1);
 
     await telemetry.flush();
     const call = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
     const body = JSON.parse(call?.[1]?.body ?? '{}');
     expect(body.events[0]).toMatchObject({
-      type: 'todo_create',
-      path: '/todos',
-      props: { source: 'form' },
+      type: 'note_create',
+      path: '/notes',
+      props: { source: 'editor' },
     });
     // 同一会话内 sessionId 保持稳定
     telemetry.track('page_view');

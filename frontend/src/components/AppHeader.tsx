@@ -20,11 +20,19 @@ export function AppHeader() {
   const { t, lang, setLang } = useI18n();
   return (
     <Header className="flex items-center justify-between !border-b !border-black/5 !bg-white/90 !px-6 !shadow-none">
-      <Link to="/" className="flex items-center gap-2">
-        <Title level={4} className="!m-0 !font-semibold !tracking-tight">
-          {t('site.name')}
-        </Title>
-      </Link>
+      <div className="flex items-center gap-6">
+        <Link to="/" className="flex items-center gap-2">
+          <Title level={4} className="!m-0 !font-semibold !tracking-tight">
+            {t('site.name')}
+          </Title>
+        </Link>
+        <nav className="hidden items-center gap-1 sm:flex">
+          <Link to="/notes" className="rounded px-2 py-1 text-sm text-gray-600 hover:text-[color:var(--brand)] hover:no-underline dark:!text-gray-300">{t('home.notes')}</Link>
+          <Link to="/archives" className="rounded px-2 py-1 text-sm text-gray-600 hover:text-[color:var(--brand)] hover:no-underline dark:!text-gray-300">{t('archive.title')}</Link>
+          <Link to="/projects" className="rounded px-2 py-1 text-sm text-gray-600 hover:text-[color:var(--brand)] hover:no-underline dark:!text-gray-300">{t('home.projects')}</Link>
+          <Link to="/about" className="rounded px-2 py-1 text-sm text-gray-600 hover:text-[color:var(--brand)] hover:no-underline dark:!text-gray-300">{t('home.about')}</Link>
+        </nav>
+      </div>
       <Space size="small">
         <Button
           type="text"

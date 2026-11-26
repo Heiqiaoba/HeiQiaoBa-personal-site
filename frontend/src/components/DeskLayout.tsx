@@ -11,6 +11,7 @@ const NAV = [
   { to: '/write', key: 'desk.nav.overview', icon: '◫', end: true },
   { to: '/write/articles', key: 'desk.nav.articles', icon: '▤', end: false },
   { to: '/write/drafts', key: 'desk.nav.drafts', icon: '◱', end: false },
+  { to: '/write/images', key: 'images.title', icon: '▧', end: false },
   { to: '/write/settings', key: 'settings.title', icon: '⚙', end: false },
 ] as const;
 

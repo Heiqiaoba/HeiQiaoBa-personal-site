@@ -38,18 +38,44 @@ export function NoteEditor() {
   const [ready, setReady] = useState(isNew);
   const [content, setContent] = useState('');
   const [title, setTitle] = useState('');
+  const [autosaved, setAutosaved] = useState(false);
+  const draftKey = `note-draft-${id ?? 'new'}`;
 
   useEffect(() => {
     if (note) {
-      form.setFieldsValue({
+      // 优先恢复本地草稿（若比服务器内容更新），否则用服务器内容
+      let initial = {
         slug: note.slug, title: note.title, summary: note.summary,
         content: note.content, status: note.status, tags: note.tags,
-      });
-      setContent(note.content);
-      setTitle(note.title);
+      };
+      try {
+        const cached = JSON.parse(localStorage.getItem(draftKey) ?? 'null');
+        if (cached && cached.content && cached.content !== note.content) {
+          initial = { ...initial, ...cached };
+          message.info(t('draft.restored'));
+        }
+      } catch { /* ignore */ }
+      form.setFieldsValue(initial);
+      setContent(initial.content);
+      setTitle(initial.title);
       setReady(true);
     }
-  }, [note, form]);
+  }, [note, form, draftKey, t]);
+
+  // 自动保存：内容或表单变化后 3 秒写入 localStorage
+  useEffect(() => {
+    if (!ready) return;
+    const timer = setTimeout(() => {
+      const values = form.getFieldsValue();
+      localStorage.setItem(draftKey, JSON.stringify({ ...values, content, savedAt: Date.now() }));
+      setAutosaved(true);
+      setTimeout(() => setAutosaved(false), 2000);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [content, title, ready, form, draftKey]);
+
+  // 保存成功后清除本地草稿
+  const clearDraft = () => localStorage.removeItem(draftKey);
 
   const wordCount = content.replace(/\s/g, '').length;
   const readMinutes = Math.max(1, Math.ceil(wordCount / 400));
@@ -64,6 +90,7 @@ export function NoteEditor() {
     try {
       if (isNew) await create.mutateAsync(payload);
       else await update.mutateAsync({ ...payload, id: id! });
+      clearDraft();
       message.success(t('admin.saved'));
       navigate('/write');
     } catch {
@@ -95,7 +122,7 @@ export function NoteEditor() {
         <div className="mb-6 flex items-center justify-between">
           <Title level={2} className="!mb-0">{isNew ? t('admin.new') : t('admin.edit')}</Title>
           <Space>
-            <Text type="secondary" className="!text-xs">{wordCount} {t('desk.words')} · {readMinutes} {t('desk.readTime')}</Text>
+            <Text type="secondary" className="!text-xs">{wordCount} {t('desk.words')} · {readMinutes} {t('desk.readTime')} · {autosaved ? t('draft.saved') : t('draft.autosave')}</Text>
             <Button onClick={() => navigate('/write')}>{t('admin.cancel')}</Button>
             <Button type="primary" onClick={saveShortcut} loading={create.isPending || update.isPending}>
               {t('admin.save')} (⌘S)

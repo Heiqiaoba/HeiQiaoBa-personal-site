@@ -33,6 +33,13 @@ const envSchema = z.object({
   /** 文档访问密钥（简单保护，生产建议前置网关） */
   DOCS_TOKEN: z.string().optional(),
   LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).optional(),
+  /** 图片存储后端：local（默认，本地磁盘）或 s3（S3 兼容：R2/OSS/S3） */
+  STORAGE_DRIVER: z.enum(['local', 's3']).default('local'),
+  S3_ENDPOINT: z.string().optional(),
+  S3_BUCKET: z.string().optional(),
+  S3_ACCESS_KEY: z.string().optional(),
+  S3_SECRET_KEY: z.string().optional(),
+  S3_PUBLIC_URL: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

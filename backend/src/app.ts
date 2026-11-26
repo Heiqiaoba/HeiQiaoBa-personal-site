@@ -22,10 +22,12 @@ import { env, isProd } from './config/env';
 import { logger, requestLogger } from './config/logger';
 import { auth } from './lib/auth';
 import { errorHandler } from './middleware/error-handler';
+import { feedRoutes } from './routes/feed';
 import { healthRoutes } from './routes/health';
 import { noteRoutes } from './routes/notes';
 import { telemetryRoutes } from './routes/telemetry';
-import { UPLOAD_DIR, uploadRoutes } from './routes/upload';
+import { uploadRoutes } from './routes/upload';
+import { UPLOAD_DIR } from './lib/storage';
 
 /**
  * 构建并装配完整的 Fastify 实例（不监听端口）。
@@ -153,6 +155,9 @@ export async function buildApp() {
 
   // 统一错误处理
   app.setErrorHandler(errorHandler);
+
+  // RSS：挂在根路径 /feed.xml（不带 /api 前缀）
+  await feedRoutes(app);
 
   // 业务路由统一挂到 /api/v1
   await app.register(

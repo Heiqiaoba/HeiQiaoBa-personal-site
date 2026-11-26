@@ -31,6 +31,10 @@ export default defineConfig({
         target: 'http://localhost:3100',
         changeOrigin: true,
       },
+      '/feed.xml': {
+        target: 'http://localhost:3100',
+        changeOrigin: true,
+      },
     },
   },
   build: {

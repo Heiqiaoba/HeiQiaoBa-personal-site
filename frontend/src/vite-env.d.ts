@@ -12,6 +12,11 @@ interface ImportMetaEnv {
   readonly VITE_TELEMETRY_SAMPLE?: string;
   /** 开发环境下打印埋点事件，默认关闭 */
   readonly VITE_TELEMETRY_DEBUG?: string;
+  /** Giscus 评论（可选，四项都填才启用） */
+  readonly VITE_GISCUS_REPO?: string;
+  readonly VITE_GISCUS_REPO_ID?: string;
+  readonly VITE_GISCUS_CATEGORY?: string;
+  readonly VITE_GISCUS_CATEGORY_ID?: string;
 }
 
 interface ImportMeta {

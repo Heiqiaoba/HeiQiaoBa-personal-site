@@ -159,7 +159,7 @@ class Telemetry {
 export const telemetry = new Telemetry();
 
 /**
- * 手动埋点的便捷函数：等价于 `telemetry.track`，如 `track('todo_create', { source: 'form' })`。
+ * 手动埋点的便捷函数：等价于 `telemetry.track`，如 `track('note_create', { source: 'editor' })`。
  * @param type 事件类型
  * @param props 可选附加属性
  */

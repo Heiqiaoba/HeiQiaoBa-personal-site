@@ -15,6 +15,13 @@
       "when": 1795672953131,
       "tag": "0001_pink_invaders",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795684068355,
+      "tag": "0002_normal_apocalypse",
+      "breakpoints": true
     }
   ]
 }

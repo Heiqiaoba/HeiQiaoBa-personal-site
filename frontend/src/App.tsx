@@ -15,11 +15,13 @@ import { NotFound } from '@/routes/NotFound';
 import { NoteDetail } from '@/routes/NoteDetail';
 import { Notes } from '@/routes/Notes';
 import { About } from '@/routes/About';
+import { Archives } from '@/routes/Archives';
 import { Projects } from '@/routes/Projects';
 import { AdminNotes } from '@/routes/admin/AdminNotes';
 import { DeskOverview } from '@/routes/admin/DeskOverview';
 import { NoteEditor } from '@/routes/admin/NoteEditor';
 import { Settings } from '@/routes/admin/Settings';
+import { Images } from '@/routes/admin/Images';
 import { ConfigProvider, Layout } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import { Route, Routes, useLocation } from 'react-router-dom';
@@ -40,6 +42,7 @@ export function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/notes" element={<Notes />} />
+            <Route path="/archives" element={<Archives />} />
             <Route path="/notes/:slug" element={<NoteDetail />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/about" element={<About />} />
@@ -47,6 +50,7 @@ export function App() {
             <Route path="/write" element={<AdminGuard><DeskLayout><DeskOverview /></DeskLayout></AdminGuard>} />
             <Route path="/write/articles" element={<AdminGuard><DeskLayout><AdminNotes key="articles" /></DeskLayout></AdminGuard>} />
             <Route path="/write/drafts" element={<AdminGuard><DeskLayout><AdminNotes key="drafts" mode="drafts" /></DeskLayout></AdminGuard>} />
+            <Route path="/write/images" element={<AdminGuard><DeskLayout><Images /></DeskLayout></AdminGuard>} />
             <Route path="/write/settings" element={<AdminGuard><DeskLayout><Settings /></DeskLayout></AdminGuard>} />
             <Route path="/write/new" element={<AdminGuard><NoteEditor /></AdminGuard>} />
             <Route path="/write/:id" element={<AdminGuard><NoteEditor /></AdminGuard>} />
@@ -56,6 +60,7 @@ export function App() {
         {!isDesk && (
           <Footer className="!bg-transparent !text-center !text-black/40">
             © {new Date().getFullYear()} {t('site.name')} · {t('footer.rights')}
+            <a href="/feed.xml" className="ml-3 hover:text-[color:var(--brand)]">RSS</a>
           </Footer>
         )}
       </Layout>

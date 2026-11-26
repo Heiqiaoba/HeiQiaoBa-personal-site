@@ -84,7 +84,7 @@ export function Notes() {
               <div className="flex flex-wrap items-center gap-2">
                 {note.tags.slice(0, 2).map((x) => <Tag key={x} className="!text-xs">{x}</Tag>)}
                 <Text className="!text-xs !text-[color:var(--text-muted)]">
-                  {(note.publishedAt ?? note.createdAt).slice(0, 10)}
+                  {(note.publishedAt ?? note.createdAt).slice(0, 10)} · {note.viewCount} {t('notes.views')}
                 </Text>
               </div>
             </Link>

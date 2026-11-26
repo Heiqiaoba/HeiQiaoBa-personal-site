@@ -38,8 +38,8 @@ function Root() {
   useTelemetryErrors();
   return (
     <StrictMode>
-      <ErrorBoundary>
-        <LangProvider>
+      <LangProvider>
+        <ErrorBoundary>
           <ThemeProvider>
             <QueryClientProvider client={queryClient}>
               <BrowserRouter>
@@ -49,8 +49,8 @@ function Root() {
               </BrowserRouter>
             </QueryClientProvider>
           </ThemeProvider>
-        </LangProvider>
-      </ErrorBoundary>
+        </ErrorBoundary>
+      </LangProvider>
     </StrictMode>
   );
 }

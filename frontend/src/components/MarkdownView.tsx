@@ -9,8 +9,19 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeSlug from 'rehype-slug';
+import bash from 'highlight.js/lib/languages/bash';
+import javascript from 'highlight.js/lib/languages/javascript';
+import typescript from 'highlight.js/lib/languages/typescript';
+import json from 'highlight.js/lib/languages/json';
+import markdown from 'highlight.js/lib/languages/markdown';
+import sql from 'highlight.js/lib/languages/sql';
+import css from 'highlight.js/lib/languages/css';
+import xml from 'highlight.js/lib/languages/xml';
 import { message } from 'antd';
-import { useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
+
+/** 只注册博客实际会用到的语言，避免把 37 种 common 语言（~950KB）打进 bundle */
+const LANGUAGES = { bash, javascript, js: javascript, typescript, ts: typescript, json, markdown, md: markdown, sql, css, xml, html: xml };
 
 /** 从 className="hljs language-xxx" 里取语言名 */
 function languageOf(className?: string): string | undefined {
@@ -68,11 +79,16 @@ function extractText(node: ReactNode): string {
 }
 
 export function MarkdownView({ content }: { content: string }) {
+  // rehype-highlight 插件带配置，需要稳定引用避免每次渲染重建
+  const rehypePlugins = useMemo<any[]>(
+    () => [[rehypeHighlight, { languages: LANGUAGES, subset: Object.keys(LANGUAGES) }], rehypeSlug],
+    [],
+  );
   return (
     <div className="prose max-w-none !leading-[1.9] text-[color:var(--text)]">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeHighlight, rehypeSlug]}
+        rehypePlugins={rehypePlugins}
         components={{
           // 代码块走自定义组件
           pre: ({ children }) => {

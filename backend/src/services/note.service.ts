@@ -20,6 +20,7 @@ function toDTO(row: NoteRow, tagNames: string[]): Note {
     summary: row.summary,
     content: row.content,
     status: row.status as Note['status'],
+    viewCount: row.viewCount,
     tags: tagNames,
     publishedAt: row.publishedAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString(),
@@ -123,6 +124,14 @@ export async function getNoteBySlug(slug: string, publicOnly: boolean): Promise<
   if (!row || (publicOnly && row.status !== 'published')) throw Errors.notFound('Note not found');
   const tagMap = await tagsForNotes([row.id]);
   return toDTO(row, tagMap.get(row.id) ?? []);
+}
+
+/** 阅读量 +1（SQL 原子自增，不影响本次响应返回的计数） */
+export async function incrementViewCount(id: string): Promise<void> {
+  await db
+    .update(schema.notes)
+    .set({ viewCount: sql`${schema.notes.viewCount} + 1` })
+    .where(eq(schema.notes.id, id));
 }
 
 /** 重建某笔记的标签关联 */

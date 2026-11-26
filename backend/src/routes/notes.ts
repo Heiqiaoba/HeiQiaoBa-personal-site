@@ -22,7 +22,10 @@ export async function noteRoutes(app: FastifyInstance) {
 
   app.get('/notes/:slug', async (req) => {
     const { slug } = parseParams(slugParam, req);
-    return noteService.getNoteBySlug(slug, true);
+    const note = await noteService.getNoteBySlug(slug, true);
+    // 阅读量 +1（不阻塞响应语义；失败也不影响阅读）
+    void noteService.incrementViewCount(note.id).catch(() => {});
+    return note;
   });
 
   app.get('/tags', async () => noteService.listTags());
