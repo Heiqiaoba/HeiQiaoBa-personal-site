@@ -108,6 +108,14 @@ body {
   margin-bottom: 8px;
 }
 
+/* ByteMD 分栏：ByteMD 默认高度仅 300px，给足空间让左右分栏清晰可见 */
+.bytemd {
+  height: 620px;
+}
+.bytemd-editor, .bytemd-preview {
+  box-sizing: border-box;
+}
+
 /* 前台文章正文排版 */
 .prose h1, .prose h2, .prose h3 {
   font-weight: 600;

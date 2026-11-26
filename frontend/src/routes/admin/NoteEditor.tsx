@@ -55,9 +55,11 @@ export function NoteEditor() {
   const readMinutes = Math.max(1, Math.ceil(wordCount / 400));
 
   const onFinish = async (values: FormValues) => {
+    // content 由 MarkdownEditor 的 React state 管理，不在 antd Form 里，
+    // 所以必须显式带上，否则提交时是 undefined → 后端 400。
     const payload = {
       slug: values.slug, title: values.title, summary: values.summary ?? '',
-      content: values.content, status: values.status, tags: values.tags ?? [],
+      content: content || values.content || '', status: values.status, tags: values.tags ?? [],
     };
     try {
       if (isNew) await create.mutateAsync(payload);
@@ -135,9 +137,7 @@ export function NoteEditor() {
         </div>
 
         <div className="rounded-xl border border-[color:var(--border)] bg-white p-4">
-          <Form.Item name="content" rules={[{ required: true }]} className="!mb-0">
-            <MarkdownEditor value={content} onChange={setContent} />
-          </Form.Item>
+          <MarkdownEditor value={content} onChange={setContent} />
         </div>
       </div>
     </div>
