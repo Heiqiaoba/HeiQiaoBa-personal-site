@@ -6,43 +6,33 @@ import { useI18n } from '@/i18n';
 import { useNote, useNotes } from '@/api/notes';
 import { useIsAdmin } from '@/lib/useIsAdmin';
 import { ReadingProgress } from '@/components/ReadingProgress';
+import { MarkdownView } from '@/components/MarkdownView';
 import { useDocumentMeta } from '@/lib/useDocumentMeta';
-import { Button, Spin, Tag, Typography, message } from 'antd';
-import { marked } from 'marked';
-import { useEffect, useMemo, useState } from 'react';
+import GithubSlugger from 'github-slugger';
+import { Button, Spin, Tag, Typography } from 'antd';
+import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import type { Note } from '@/api/contract';
 
 const { Title, Paragraph } = Typography;
 
 type TocItem = { level: number; text: string; id: string };
 
-/** 从 Markdown 提取标题生成 TOC，并给渲染后的 h1-h3 加 id */
+/**
+ * 从 Markdown 提取标题生成 TOC。
+ * 用 github-slugger 生成 id，与 MarkdownView 里的 rehype-slug 完全一致，
+ * 保证目录锚点能正确跳到对应标题。
+ */
 function buildToc(markdown: string): TocItem[] {
   const items: TocItem[] = [];
-  const lines = markdown.split('\n');
-  let h2 = 0, h3 = 0;
-  for (const line of lines) {
+  const slugger = new GithubSlugger();
+  for (const line of markdown.split('\n')) {
     const m = line.match(/^(#{1,3})\s+(.+)$/);
     if (!m) continue;
     const level = m[1]!.length;
     const text = m[2]!.replace(/[*`_]/g, '').trim();
-    let id: string;
-    if (level === 1) id = 'toc-title';
-    else if (level === 2) id = `toc-2-${++h2}`;
-    else id = `toc-3-${++h3}`;
-    items.push({ level, text, id });
+    items.push({ level, text, id: slugger.slug(text) });
   }
   return items;
-}
-
-function injectHeadingIds(html: string): string {
-  let h2 = 0, h3 = 0;
-  return html.replace(/<h([123])>(.*?)<\/h\1>/g, (_all, level: string, inner: string) => {
-    const lvl = Number(level);
-    const id = lvl === 1 ? 'toc-title' : lvl === 2 ? `toc-2-${++h2}` : `toc-3-${++h3}`;
-    return `<h${level} id="${id}">${inner}</h${level}>`;
-  });
 }
 
 export function NoteDetail() {
@@ -52,30 +42,7 @@ export function NoteDetail() {
   const { data: note, isLoading, isError } = useNote(slug);
   const { data: allNotes } = useNotes({ page: 1, pageSize: 100 });
 
-  useEffect(() => {
-    // 给代码块加复制按钮
-    const timer = setTimeout(() => {
-      document.querySelectorAll('.prose pre').forEach((pre) => {
-        // 检查与插入都限定在 pre 自身：pre 有 relative，absolute 按钮才会定位在代码块右上角
-        if (pre.querySelector('.copy-code')) return;
-        const btn = document.createElement('button');
-        btn.className = 'copy-code absolute right-2 top-2 rounded bg-white/10 px-2 py-1 text-xs text-gray-200 hover:bg-white/20';
-        btn.textContent = 'Copy';
-        btn.onclick = () => {
-          const code = pre.querySelector('code')?.textContent ?? '';
-          void navigator.clipboard.writeText(code).then(() => message.success('Copied'));
-        };
-        pre.classList.add('relative');
-        pre.appendChild(btn); // 插进 pre 里，而不是父容器
-      });
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [note]);
-
-  const html = useMemo(
-    () => (note ? injectHeadingIds(marked.parse(note.content, { async: false }) as string) : ''),
-    [note],
-  );
+  // TOC 从 Markdown 标题生成；rehype-slug 会自动给渲染后的标题加同样的 id
   const toc = useMemo(() => (note ? buildToc(note.content) : []), [note]);
 
   const { prev, next } = useMemo(() => {
@@ -139,8 +106,7 @@ export function NoteDetail() {
               {note.summary}
             </Paragraph>
           )}
-          <div className="prose max-w-none !leading-[1.9] text-[color:var(--text)]"
-            dangerouslySetInnerHTML={{ __html: html }} />
+          <MarkdownView content={note.content} />
 
           {/* 上一篇/下一篇 */}
           <div className="mt-12 grid gap-4 border-t border-[color:var(--border)] pt-6 sm:grid-cols-2">

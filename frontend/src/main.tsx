@@ -22,6 +22,7 @@ import { App } from './App';
 import { ApiAuthSync } from './components/ApiAuthSync';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { TelemetryBootstrap } from './components/TelemetryBootstrap';
+import 'highlight.js/styles/github-dark.css';
 import './styles/index.css';
 import './styles/antd-overrides.less';
 
