@@ -21,6 +21,15 @@ export function useNotes(query: Partial<NoteListQuery> = {}) {
     queryFn: () => fetchNotes(query),
   });
 }
+
+/** 标签列表（含已发布笔记计数） */
+type TagCount = { name: string; count: number };
+export function useTags() {
+  return useQuery({
+    queryKey: ['tags'],
+    queryFn: () => api.get<TagCount[]>('/tags'),
+  });
+}
 export function useNote(slug: string) {
   return useQuery({ queryKey: ['note', slug], queryFn: () => fetchNote(slug) });
 }

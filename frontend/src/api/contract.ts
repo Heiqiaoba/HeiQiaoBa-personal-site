@@ -231,6 +231,15 @@ export type UpdateNoteInput = z.infer<typeof updateNoteSchema>;
 export const noteListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  /** 按标签过滤（精确匹配标签名） */
   tag: z.string().optional(),
+  /** 按状态过滤：管理端可传 published/draft，公开接口忽略此参数（强制 published） */
+  status: z.enum(['published', 'draft']).optional(),
+  /** 关键词：标题/摘要/正文模糊匹配（ILIKE） */
+  keyword: z.string().max(100).optional(),
+  /** 排序字段 */
+  sortBy: z.enum(['publishedAt', 'createdAt', 'updatedAt', 'title']).default('publishedAt'),
+  /** 排序方向 */
+  sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
 export type NoteListQuery = z.infer<typeof noteListQuerySchema>;

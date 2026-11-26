@@ -1,10 +1,10 @@
 /**
- * 公开笔记列表页（vanBlog 风格）：标签筛选 + 卡片网格 + 搜索 + 分页。
+ * 公开笔记列表页：搜索、标签筛选、分页全部由后端接口完成。
  */
 import { useI18n } from '@/i18n';
-import { useNotes } from '@/api/notes';
+import { useNotes, useTags } from '@/api/notes';
 import { Button, Input, Pagination, Tag, Typography } from 'antd';
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const { Title, Paragraph, Text } = Typography;
@@ -12,21 +12,28 @@ const { Title, Paragraph, Text } = Typography;
 export function Notes() {
   const { t } = useI18n();
   const [page, setPage] = useState(1);
+  const [pageSize] = useState(12);
   const [tag, setTag] = useState<string | undefined>();
   const [keyword, setKeyword] = useState('');
-  const { data, isLoading, isError } = useNotes({ page: 1, pageSize: 100, tag });
+  const [debounced, setDebounced] = useState('');
 
-  const items = useMemo(() => {
-    const q = keyword.trim().toLowerCase();
-    return (data?.items ?? []).filter((note) =>
-      !q || note.title.toLowerCase().includes(q) || note.content.toLowerCase().includes(q));
-  }, [data, keyword]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebounced(keyword.trim());
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [keyword]);
 
-  const allTags = useMemo(() => {
-    const set = new Set<string>();
-    (data?.items ?? []).forEach((n) => n.tags.forEach((x) => set.add(x)));
-    return Array.from(set).slice(0, 12);
-  }, [data]);
+  const { data, isLoading, isError } = useNotes({
+    page,
+    pageSize,
+    ...(tag ? { tag } : {}),
+    ...(debounced ? { keyword: debounced } : {}),
+    sortBy: 'publishedAt',
+    sortOrder: 'desc',
+  });
+  const { data: tags } = useTags();
 
   return (
     <div className="min-h-screen bg-[color:var(--bg)]">
@@ -45,20 +52,24 @@ export function Notes() {
           />
           <div className="flex flex-wrap gap-2">
             {tag && (
-              <Button size="small" type="primary" onClick={() => setTag(undefined)}>{tag} ×</Button>
+              <Button size="small" type="primary" onClick={() => { setTag(undefined); setPage(1); }}>{tag} ×</Button>
             )}
-            {allTags.filter((x) => x !== tag).map((x) => (
-              <Tag key={x} className="cursor-pointer !py-1" onClick={() => setTag(x)}>{x}</Tag>
+            {tags?.filter((x) => x.name !== tag).slice(0, 12).map((x) => (
+              <Tag key={x.name} className="cursor-pointer !py-1" onClick={() => { setTag(x.name); setPage(1); }}>
+                {x.name} {x.count}
+              </Tag>
             ))}
           </div>
         </div>
 
         {isLoading && <Paragraph type="secondary">{t('admin.loading')}</Paragraph>}
         {isError && <Paragraph type="danger">{t('notes.notFound')}</Paragraph>}
-        {!isLoading && items.length === 0 && <Paragraph type="secondary">{t('notes.empty')}</Paragraph>}
+        {!isLoading && data && data.items.length === 0 && (
+          <Paragraph type="secondary">{t('notes.empty')}</Paragraph>
+        )}
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {items.slice((page - 1) * 12, page * 12).map((note, i) => (
+          {data?.items.map((note, i) => (
             <Link key={note.id} to={`/notes/${note.slug}`}
               className="group flex flex-col rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-5 no-underline transition-shadow hover:shadow-md">
               <div className="mb-3 flex h-24 items-center justify-center rounded-lg bg-gradient-to-br from-blue-50 to-cyan-50 text-3xl dark:from-slate-800 dark:to-slate-700">
@@ -80,8 +91,14 @@ export function Notes() {
           ))}
         </div>
 
-        {data && data.total > 12 && (
-          <Pagination className="mt-8 text-center" current={page} pageSize={12} total={data.total} onChange={setPage} />
+        {data && data.total > pageSize && (
+          <Pagination
+            className="mt-8 text-center"
+            current={page}
+            pageSize={pageSize}
+            total={data.total}
+            onChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+          />
         )}
       </div>
     </div>

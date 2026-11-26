@@ -4,7 +4,7 @@
  * 公开查询只返回 status=published；管理端查询返回全部。
  * 标签以名称存储，写入时按名称复用/创建 tag，并重建 note_tags 关联。
  */
-import { and, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, ilike, inArray, or, sql, type SQL } from 'drizzle-orm';
 import type { CreateNoteInput, Note, NoteListQuery, UpdateNoteInput } from '../contract';
 import { db, schema } from '../db';
 import { Errors } from '../lib/errors';
@@ -44,9 +44,22 @@ async function tagsForNotes(noteIds: string[]): Promise<Map<string, string[]>> {
   return result;
 }
 
-/** 列表查询：publicOnly=true 时只返回已发布笔记 */
+/**
+ * 列表查询（全部在 SQL 层完成过滤/搜索/排序/分页）：
+ * - publicOnly=true：强制只看 published，忽略传入的 status
+ * - 管理端：可按 status 精确过滤（文章管理=全部、草稿箱=draft）
+ * - keyword：ILIKE 模糊匹配标题/摘要/正文
+ * - sortBy + sortOrder：动态排序，title 用 collate 忽略大小写
+ */
 export async function listNotes(query: NoteListQuery, publicOnly: boolean) {
-  const conditions = [publicOnly ? eq(schema.notes.status, 'published') : sql`true`];
+  const conditions: SQL[] = [publicOnly ? eq(schema.notes.status, 'published') : sql`true`];
+
+  // 状态过滤（仅管理端生效）
+  if (!publicOnly && query.status) {
+    conditions.push(eq(schema.notes.status, query.status));
+  }
+
+  // 标签过滤（精确匹配标签名）
   if (query.tag) {
     const tagged = db
       .select({ noteId: schema.noteTags.noteId })
@@ -55,7 +68,34 @@ export async function listNotes(query: NoteListQuery, publicOnly: boolean) {
       .where(eq(schema.tags.name, query.tag));
     conditions.push(inArray(schema.notes.id, tagged));
   }
+
+  // 关键词搜索：标题 / 摘要 / 正文
+  if (query.keyword?.trim()) {
+    const kw = `%${query.keyword.trim()}%`;
+    conditions.push(
+      or(
+        ilike(schema.notes.title, kw),
+        ilike(schema.notes.summary, kw),
+        ilike(schema.notes.content, kw),
+      )!,
+    );
+  }
+
   const where = and(...conditions);
+
+  // 排序字段白名单（契约已校验，这里再做一次映射 defense-in-depth）
+  const sortColumn =
+    query.sortBy === 'title'
+      ? sql`lower(${schema.notes.title})`
+      : query.sortBy === 'updatedAt'
+        ? schema.notes.updatedAt
+        : query.sortBy === 'createdAt'
+          ? schema.notes.createdAt
+          : schema.notes.publishedAt;
+  const orderFn = query.sortOrder === 'asc' ? asc : desc;
+  // 次要排序：按 id 保证分页稳定性，避免同值字段导致记录漂移
+  const orderBy = [orderFn(sortColumn), desc(schema.notes.id)];
+
   const countRows = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(schema.notes)
@@ -65,7 +105,7 @@ export async function listNotes(query: NoteListQuery, publicOnly: boolean) {
     .select()
     .from(schema.notes)
     .where(where)
-    .orderBy(desc(schema.notes.publishedAt), desc(schema.notes.createdAt))
+    .orderBy(...orderBy)
     .limit(query.pageSize)
     .offset((query.page - 1) * query.pageSize);
   const tagMap = await tagsForNotes(rows.map((r) => r.id));
