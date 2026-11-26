@@ -43,8 +43,8 @@ export function App() {
             <Route path="/about" element={<Placeholder titleKey="home.about" />} />
             <Route path="/login" element={<Login />} />
             <Route path="/write" element={<AdminGuard><DeskLayout><DeskOverview /></DeskLayout></AdminGuard>} />
-            <Route path="/write/articles" element={<AdminGuard><DeskLayout><AdminNotes /></DeskLayout></AdminGuard>} />
-            <Route path="/write/drafts" element={<AdminGuard><DeskLayout><AdminNotes mode="drafts" /></DeskLayout></AdminGuard>} />
+            <Route path="/write/articles" element={<AdminGuard><DeskLayout><AdminNotes key="articles" /></DeskLayout></AdminGuard>} />
+            <Route path="/write/drafts" element={<AdminGuard><DeskLayout><AdminNotes key="drafts" mode="drafts" /></DeskLayout></AdminGuard>} />
             <Route path="/write/new" element={<AdminGuard><NoteEditor /></AdminGuard>} />
             <Route path="/write/:id" element={<AdminGuard><NoteEditor /></AdminGuard>} />
             <Route path="*" element={<NotFound />} />
