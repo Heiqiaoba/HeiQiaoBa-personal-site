@@ -3,6 +3,7 @@
  */
 import { useI18n } from '@/i18n';
 import { useNote } from '@/api/notes';
+import { useIsAdmin } from '@/lib/useIsAdmin';
 import { Button, Spin, Tag, Typography } from 'antd';
 import { marked } from 'marked';
 import { Link, useParams } from 'react-router-dom';
@@ -12,6 +13,7 @@ const { Title, Paragraph } = Typography;
 export function NoteDetail() {
   const { slug = '' } = useParams();
   const { t } = useI18n();
+  const isAdmin = useIsAdmin();
   const { data: note, isLoading, isError } = useNote(slug);
 
   if (isLoading) return <div className="p-16 text-center"><Spin /></div>;
@@ -27,7 +29,14 @@ export function NoteDetail() {
 
   return (
     <article className="mx-auto max-w-[720px] px-6 py-14">
-      <Link to="/notes"><Button type="link" className="!px-0 !mb-4">{t('notes.back')}</Button></Link>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <Link to="/notes"><Button type="link" className="!px-0">{t('notes.back')}</Button></Link>
+        {isAdmin && (
+          <Link to={`/write/${note.id}`}>
+            <Button type="link" size="small" className="!px-0">{t('notes.edit')}</Button>
+          </Link>
+        )}
+      </div>
       <Title level={1} className="!mb-3 !text-[2rem]">{note.title}</Title>
       <div className="mb-6 flex flex-wrap items-center gap-2">
         {note.tags.map((tag) => <Tag key={tag}>{tag}</Tag>)}

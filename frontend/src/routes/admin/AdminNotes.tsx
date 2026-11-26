@@ -35,7 +35,7 @@ export function AdminNotes() {
       key: 'actions',
       render: (_, note) => (
         <div className="flex gap-2">
-          <Link to={`/admin/notes/${note.id}`}><Button size="small">{t('admin.edit')}</Button></Link>
+          <Link to={`/write/${note.id}`}><Button size="small">{t('admin.edit')}</Button></Link>
           <Popconfirm
             title={t('admin.deleteConfirm')}
             onConfirm={() => del.mutate(note.id, { onSuccess: () => message.success(t('admin.saved')) })}
@@ -51,7 +51,7 @@ export function AdminNotes() {
     <div className="mx-auto max-w-[1000px] px-6 py-12">
       <div className="mb-6 flex items-center justify-between">
         <Title level={2} className="!mb-0">{t('admin.notes')}</Title>
-        <Link to="/admin/notes/new">
+        <Link to="/write/new">
           <Button type="primary">{t('admin.new')}</Button>
         </Link>
       </div>

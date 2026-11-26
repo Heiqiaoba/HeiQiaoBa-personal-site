@@ -4,6 +4,7 @@
  */
 import { useI18n } from '@/i18n';
 import { signOutAndClear, useSession } from '@/lib/auth-client';
+import { useIsAdmin } from '@/lib/useIsAdmin';
 import { LogoutOutlined } from '@ant-design/icons';
 import { Button, Layout, Space, Typography } from 'antd';
 import { Link } from 'react-router-dom';
@@ -13,6 +14,7 @@ const { Title, Text } = Typography;
 
 export function AppHeader() {
   const { data: session } = useSession();
+  const isAdmin = useIsAdmin();
   const { t, lang, setLang } = useI18n();
   return (
     <Header className="flex items-center justify-between !border-b !border-black/5 !bg-white/90 !px-6 !shadow-none">
@@ -32,6 +34,11 @@ export function AppHeader() {
         </Button>
         {session ? (
           <>
+            {isAdmin && (
+              <Link to="/write">
+                <Button type="link" size="small">{t('nav.write')}</Button>
+              </Link>
+            )}
             <Text type="secondary" className="!hidden sm:!inline">
               {session.user.email}
             </Text>

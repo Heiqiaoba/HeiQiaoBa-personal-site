@@ -60,7 +60,7 @@ export function NoteEditor() {
       if (isNew) await create.mutateAsync(payload);
       else await update.mutateAsync({ ...payload, id: id! });
       message.success(t('admin.saved'));
-      navigate('/admin/notes');
+      navigate('/write');
     } catch {
       // 错误由 api 客户端归一化并拦截展示
     }
@@ -106,7 +106,7 @@ export function NoteEditor() {
           <Button type="primary" htmlType="submit" loading={create.isPending || update.isPending}>
             {t('admin.save')}
           </Button>
-          <Button onClick={() => navigate('/admin/notes')}>{t('admin.cancel')}</Button>
+          <Button onClick={() => navigate('/write')}>{t('admin.cancel')}</Button>
         </div>
       </Form>
     </div>

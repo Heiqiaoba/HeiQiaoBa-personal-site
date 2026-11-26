@@ -86,6 +86,9 @@ const dict = {
     'admin.loading': '加载中…',
     'admin.status.published': '已发布',
     'admin.status.draft': '草稿',
+    'nav.write': '写作台',
+    'home.newNote': '+ 写笔记',
+    'notes.edit': '编辑这篇',
   },
   en: {
     'site.name': "Heiqiao's Notes",
@@ -165,6 +168,9 @@ const dict = {
     'admin.loading': 'Loading…',
     'admin.status.published': 'Published',
     'admin.status.draft': 'Draft',
+    'nav.write': 'Write',
+    'home.newNote': '+ New note',
+    'notes.edit': 'Edit this note',
   },
 } as const;
 

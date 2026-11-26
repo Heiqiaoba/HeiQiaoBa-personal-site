@@ -38,11 +38,12 @@
 
 ## 三、后台管理（发布文章）
 
-### 路由结构
-- `/admin` —— 后台首页（需登录 + admin 角色）
-- `/admin/notes` —— 笔记列表（含草稿/已发布状态、编辑/删除入口）
-- `/admin/notes/new` —— 新建笔记
-- `/admin/notes/:id/edit` —— 编辑笔记
+### 路由结构（2026-11-26 更新）
+- `/write` —— 写作台首页（笔记列表，含草稿/已发布状态、编辑/删除入口；需登录 + admin 角色）
+- `/write/new` —— 新建笔记
+- `/write/:id` —— 编辑笔记
+- 入口：导航栏「写作台」（登录后可见）、首页「+ 写笔记」、文章详情「编辑这篇」
+- Markdown 编辑器：从轻量 textarea + 预览，到 MDXEditor / Milkdown 逐步升级
 - Markdown 编辑器：从轻量 textarea + 预览，到 MDXEditor / Milkdown 逐步升级
 
 ### 后端 API（`/api/v1/notes`）

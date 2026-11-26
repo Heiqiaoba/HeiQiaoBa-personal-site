@@ -35,9 +35,9 @@ export function App() {
             <Route path="/projects" element={<Placeholder titleKey="home.projects" />} />
             <Route path="/about" element={<Placeholder titleKey="home.about" />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/admin" element={<AdminGuard><AdminNotes /></AdminGuard>} />
-            <Route path="/admin/notes/new" element={<AdminGuard><NoteEditor /></AdminGuard>} />
-            <Route path="/admin/notes/:id" element={<AdminGuard><NoteEditor /></AdminGuard>} />
+            <Route path="/write" element={<AdminGuard><AdminNotes /></AdminGuard>} />
+            <Route path="/write/new" element={<AdminGuard><NoteEditor /></AdminGuard>} />
+            <Route path="/write/:id" element={<AdminGuard><NoteEditor /></AdminGuard>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Content>

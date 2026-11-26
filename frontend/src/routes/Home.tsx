@@ -8,6 +8,7 @@
 import { useI18n } from '@/i18n';
 import { useNotes } from '@/api/notes';
 import { api } from '@/api/client';
+import { useIsAdmin } from '@/lib/useIsAdmin';
 import { Button, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -24,6 +25,7 @@ const cards = [
 
 export function Home() {
   const { t } = useI18n();
+  const isAdmin = useIsAdmin();
   const [health, setHealth] = useState<HealthState>('loading');
   const { data: notes } = useNotes({ page: 1, pageSize: 5 });
 
@@ -84,7 +86,14 @@ export function Home() {
       {/* 最近笔记 + 关于片段 */}
       <section className="grid gap-12 border-t border-black/5 py-12 sm:grid-cols-[1.4fr_1fr]">
         <div>
-          <Title level={3} className="!mt-0 !mb-5 !text-xl">{t('home.section.notes')}</Title>
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <Title level={3} className="!m-0 !text-xl">{t('home.section.notes')}</Title>
+            {isAdmin && (
+              <Link to="/write/new">
+                <Button type="link" size="small" className="!px-0">{t('home.newNote')}</Button>
+              </Link>
+            )}
+          </div>
           {notes?.items.length ? (
             <ul className="m-0 list-none space-y-4 p-0">
               {notes.items.map((note, index) => (
