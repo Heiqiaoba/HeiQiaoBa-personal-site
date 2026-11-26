@@ -5,6 +5,7 @@
 import { useI18n } from '@/i18n';
 import { signOutAndClear, useSession } from '@/lib/auth-client';
 import { useIsAdmin } from '@/lib/useIsAdmin';
+import { useTheme } from '@/theme';
 import { LogoutOutlined } from '@ant-design/icons';
 import { Button, Layout, Space, Typography } from 'antd';
 import { Link } from 'react-router-dom';
@@ -15,6 +16,7 @@ const { Title, Text } = Typography;
 export function AppHeader() {
   const { data: session } = useSession();
   const isAdmin = useIsAdmin();
+  const { mode, toggle } = useTheme();
   const { t, lang, setLang } = useI18n();
   return (
     <Header className="flex items-center justify-between !border-b !border-black/5 !bg-white/90 !px-6 !shadow-none">
@@ -24,6 +26,14 @@ export function AppHeader() {
         </Title>
       </Link>
       <Space size="small">
+        <Button
+          type="text"
+          size="small"
+          aria-label="toggle theme"
+          onClick={toggle}
+        >
+          {mode === 'light' ? '☾' : '☀'}
+        </Button>
         <Button
           type="text"
           size="small"

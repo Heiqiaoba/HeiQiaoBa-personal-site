@@ -1,133 +1,118 @@
 /**
- * 首页：数字花园风格的个人站入口。
- *
- * 结构：Hero 问候（带徽标）→ 三栏内容入口（笔记/项目/关于）→ 最近笔记列表 →
- * 关于片段 → 站点状态。所有文案走 i18n，支持中英文切换。
- * 启动时请求 /api/v1/health，直观验证前后端连通。
+ * 首页（vanBlog 风格）：Hero 品牌区 + 文章卡片网格 + 关于侧栏。
+ * 中英双语、深浅主题；所有文案走 i18n。
  */
 import { useI18n } from '@/i18n';
 import { useNotes } from '@/api/notes';
-import { api } from '@/api/client';
 import { useIsAdmin } from '@/lib/useIsAdmin';
-import { Button, Typography } from 'antd';
+import { api } from '@/api/client';
+import { Button, Tag, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const { Title, Paragraph, Text } = Typography;
 type HealthState = 'loading' | 'ok' | 'error';
 
-/** 三张内容入口卡片 */
 const cards = [
-  { titleKey: 'home.section.notes', descKey: 'home.section.notes.desc', to: '/notes', tone: 'bg-amber-50' },
-  { titleKey: 'home.section.projects', descKey: 'home.section.projects.desc', to: '/projects', tone: 'bg-emerald-50' },
-  { titleKey: 'home.section.about', descKey: 'home.section.about.desc', to: '/about', tone: 'bg-sky-50' },
+  { titleKey: 'home.section.notes', descKey: 'home.section.notes.desc', to: '/notes', tone: 'from-amber-50 to-orange-50' },
+  { titleKey: 'home.section.projects', descKey: 'home.section.projects.desc', to: '/projects', tone: 'from-emerald-50 to-teal-50' },
+  { titleKey: 'home.section.about', descKey: 'home.section.about.desc', to: '/about', tone: 'from-sky-50 to-blue-50' },
 ] as const;
 
 export function Home() {
   const { t } = useI18n();
   const isAdmin = useIsAdmin();
   const [health, setHealth] = useState<HealthState>('loading');
-  const { data: notes } = useNotes({ page: 1, pageSize: 5 });
+  const { data: notes } = useNotes({ page: 1, pageSize: 6 });
 
   useEffect(() => {
     let active = true;
-    api
-      .get<{ status: string }>('/health')
-      .then(() => {
-        if (active) setHealth('ok');
-      })
-      .catch(() => {
-        if (active) setHealth('error');
-      });
-    return () => {
-      active = false;
-    };
+    api.get<{ status: string }>('/health')
+      .then(() => { if (active) setHealth('ok'); })
+      .catch(() => { if (active) setHealth('error'); });
+    return () => { active = false; };
   }, []);
 
   return (
-    <div className="mx-auto max-w-[860px] px-6">
+    <div className="bg-[color:var(--bg)]">
       {/* Hero */}
-      <section className="border-b border-black/5 py-16 sm:py-20">
-        <span className="inline-flex items-center rounded-full bg-black/5 px-3 py-1 text-xs tracking-wide text-black/55">
-          {t('home.hero.badge')}
-        </span>
-        <Title level={1} className="!mt-5 !mb-4 !text-[2.6rem] !font-semibold !leading-tight !tracking-tight sm:!text-[3.2rem]">
-          {t('home.title')}
-        </Title>
-        {t('site.tagline') && (
-          <Paragraph className="!text-lg !text-black/50">{t('site.tagline')}</Paragraph>
-        )}
-        <Paragraph className="!max-w-[640px] !text-[1.1rem] !leading-[1.9] !text-black/70">
-          {t('home.intro')}
-        </Paragraph>
+      <section className="border-b border-[color:var(--border)] bg-[color:var(--surface)]">
+        <div className="mx-auto max-w-[1080px] px-6 py-16 sm:py-20">
+          <span className="inline-flex items-center rounded-full bg-[color:var(--brand-soft)] px-3 py-1 text-xs font-medium text-[color:var(--brand)]">
+            {t('home.hero.badge')}
+          </span>
+          <Title level={1} className="!mt-5 !mb-4 !text-[2.6rem] !font-semibold !leading-tight sm:!text-[3.4rem]">
+            {t('home.title')}
+          </Title>
+          {t('site.tagline') && <Paragraph className="!text-lg !text-[color:var(--text-secondary)]">{t('site.tagline')}</Paragraph>}
+          <Paragraph className="!max-w-[640px] !text-[1.1rem] !leading-[1.9] !text-[color:var(--text-secondary)]">
+            {t('home.intro')}
+          </Paragraph>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link to="/notes"><Button type="primary" size="large">{t('home.notes')}</Button></Link>
+            <Link to="/about"><Button size="large">{t('home.about')}</Button></Link>
+          </div>
+        </div>
       </section>
 
-      {/* 内容入口卡片 */}
-      <section className="grid gap-4 py-12 sm:grid-cols-3">
-        {cards.map((card) => (
-          <Link
-            key={card.titleKey}
-            to={card.to}
-            className={`group rounded-2xl ${card.tone} p-6 no-underline transition-transform hover:-translate-y-1`}
-          >
-            <Title level={4} className="!mb-2 !text-black/85">
-              {t(card.titleKey)}
-            </Title>
-            <Paragraph className="!mb-3 !text-sm !leading-relaxed !text-black/55">
-              {t(card.descKey)}
-            </Paragraph>
-            <Text className="!text-sm !font-medium !text-black/45 group-hover:!text-black/70">
-              {t('home.viewAll')}
-            </Text>
-          </Link>
-        ))}
-      </section>
+      <div className="mx-auto max-w-[1080px] px-6 py-12">
+        {/* 内容入口卡片 */}
+        <section className="grid gap-4 sm:grid-cols-3">
+          {cards.map((card) => (
+            <Link key={card.titleKey} to={card.to}
+              className={`group rounded-2xl bg-gradient-to-br ${card.tone} p-6 no-underline transition-transform hover:-translate-y-1 dark:from-slate-800 dark:to-slate-900`}>
+              <Title level={4} className="!mb-2 !text-gray-800 dark:!text-gray-100">{t(card.titleKey)}</Title>
+              <Paragraph className="!mb-3 !text-sm !leading-relaxed !text-gray-600 dark:!text-gray-400">{t(card.descKey)}</Paragraph>
+              <Text className="!text-sm !font-medium !text-gray-500 group-hover:!text-[color:var(--brand)]">{t('home.viewAll')}</Text>
+            </Link>
+          ))}
+        </section>
 
-      {/* 最近笔记 + 关于片段 */}
-      <section className="grid gap-12 border-t border-black/5 py-12 sm:grid-cols-[1.4fr_1fr]">
-        <div>
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <Title level={3} className="!m-0 !text-xl">{t('home.section.notes')}</Title>
+        {/* 最近文章 */}
+        <section className="mt-14">
+          <div className="mb-6 flex items-center justify-between gap-3">
+            <Title level={2} className="!m-0 !text-2xl">{t('home.section.notes')}</Title>
             {isAdmin && (
               <Link to="/write/new">
                 <Button type="link" size="small" className="!px-0">{t('home.newNote')}</Button>
               </Link>
             )}
           </div>
-          {notes?.items.length ? (
-            <ul className="m-0 list-none space-y-4 p-0">
-              {notes.items.map((note, index) => (
-                <li key={note.id} className="flex items-baseline gap-3 border-b border-black/5 pb-3">
-                  <span className="text-xs tabular-nums text-black/30">0{index + 1}</span>
-                  <Link to={`/notes/${note.slug}`} className="text-black/80 hover:text-black">
-                    {note.title}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <Paragraph type="secondary">{t('notes.empty')}</Paragraph>
-          )}
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {notes?.items.map((note, i) => (
+              <Link key={note.id} to={`/notes/${note.slug}`}
+                className="group flex flex-col rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-5 no-underline transition-shadow hover:shadow-md">
+                <div className="mb-3 flex h-24 items-center justify-center rounded-lg bg-gradient-to-br from-blue-50 to-cyan-50 text-3xl dark:from-slate-800 dark:to-slate-700">
+                  {['✦', '◈', '❋', '✧', '◐', '✎'][i % 6]}
+                </div>
+                <Title level={4} className="!mb-2 !text-base !leading-snug !text-[color:var(--text)] group-hover:!text-[color:var(--brand)]">
+                  {note.title}
+                </Title>
+                <Paragraph className="!mb-3 !line-clamp-2 !flex-1 !text-sm !text-[color:var(--text-secondary)]">
+                  {note.summary || note.content.replace(/[#*`>\[\]]/g, '').slice(0, 100)}
+                </Paragraph>
+                <div className="flex flex-wrap items-center gap-2">
+                  {note.tags.slice(0, 2).map((tag) => <Tag key={tag} className="!text-xs">{tag}</Tag>)}
+                  <Text className="!text-xs !text-[color:var(--text-muted)]">
+                    {(note.publishedAt ?? note.createdAt).slice(0, 10)}
+                  </Text>
+                </div>
+              </Link>
+            ))}
+            {notes && notes.items.length === 0 && (
+              <Paragraph type="secondary">{t('notes.empty')}</Paragraph>
+            )}
+          </div>
           <Link to="/notes">
-            <Button type="link" className="!px-0">{t('home.viewAll')}</Button>
+            <Button type="link" className="!mt-4 !px-0">{t('home.viewAll')}</Button>
           </Link>
-        </div>
-        <div>
-          <Title level={3} className="!mt-0 !mb-5 !text-xl">{t('home.section.about')}</Title>
-          <Paragraph className="!leading-[1.9] !text-black/65">{t('home.about.text')}</Paragraph>
-          <Link to="/about">
-            <Button type="link" className="!px-0">{t('home.viewAll')}</Button>
-          </Link>
-        </div>
-      </section>
+        </section>
 
-      {/* 站点状态 */}
-      <footer className="border-t border-black/5 py-8 text-sm text-black/45">
-        <Text type="secondary">{t('home.health.title')}: </Text>
-        {health === 'loading' && <Text type="secondary">{t('home.health.loading')}</Text>}
-        {health === 'ok' && <Text type="success">{t('home.health.ok')}</Text>}
-        {health === 'error' && <Text type="danger">{t('home.health.error')}</Text>}
-      </footer>
+        {/* 站点状态 */}
+        <footer className="mt-14 border-t border-[color:var(--border)] pt-6 text-sm text-[color:var(--text-muted)]">
+          {t('home.health.title')}: {health === 'loading' ? t('home.health.loading') : health === 'ok' ? t('home.health.ok') : t('home.health.error')}
+        </footer>
+      </div>
     </div>
   );
 }

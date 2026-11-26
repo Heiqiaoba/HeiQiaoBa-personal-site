@@ -18,6 +18,24 @@
   background: var(--bg);
 }
 
+/* 深色主题（vanBlog 双主题） */
+html.dark {
+  --brand: #4aa3df;
+  --brand-soft: #16344a;
+  --text: #e5e7eb;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+  --border: #374151;
+  --bg: #111827;
+  --surface: #1f2937;
+  color-scheme: dark;
+}
+html.dark body { background: var(--bg); color: var(--text); }
+html.dark .desk-sidebar, html.dark .stat-card, html.dark .bg-white { background: var(--surface); }
+html.dark .text-gray-800, html.dark .text-gray-700, html.dark .text-black\/85, html.dark .text-black\/80 { color: var(--text); }
+html.dark .text-black\/70, html.dark .text-black\/60, html.dark .text-black\/55, html.dark .text-black\/45, html.dark .text-gray-400 { color: var(--text-secondary); }
+html.dark .border-black\/5, html.dark .border-black\/10, html.dark .border-gray-100, html.dark .border-gray-50 { border-color: var(--border); }
+
 * {
   box-sizing: border-box;
 }

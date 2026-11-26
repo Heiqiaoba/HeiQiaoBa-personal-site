@@ -28,7 +28,15 @@
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.1.1",
     "zod": "^4.6.7",
-    "marked": "^15.0.0"
+    "marked": "^15.0.0",
+    "bytemd": "^1.21.0",
+    "@bytemd/react": "^1.21.0",
+    "@bytemd/plugin-gfm": "^1.21.0",
+    "@bytemd/plugin-highlight": "^1.21.0",
+    "@bytemd/plugin-math": "^1.21.0",
+    "@bytemd/plugin-medium-zoom": "^1.21.0",
+    "@bytemd/plugin-frontmatter": "^1.21.0",
+    "katex": "^0.16.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

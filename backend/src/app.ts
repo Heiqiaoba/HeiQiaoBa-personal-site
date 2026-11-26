@@ -11,6 +11,8 @@
  */
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
+import multipart from '@fastify/multipart';
+import fastifyStatic from '@fastify/static';
 import rateLimit from '@fastify/rate-limit';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
@@ -23,6 +25,7 @@ import { errorHandler } from './middleware/error-handler';
 import { healthRoutes } from './routes/health';
 import { noteRoutes } from './routes/notes';
 import { telemetryRoutes } from './routes/telemetry';
+import { UPLOAD_DIR, uploadRoutes } from './routes/upload';
 
 /**
  * 构建并装配完整的 Fastify 实例（不监听端口）。
@@ -73,6 +76,13 @@ export async function buildApp() {
   await app.register(cors, {
     origin: env.CORS_ORIGIN.split(',').map((s) => s.trim()),
     credentials: true,
+  });
+  // 图片上传：multipart 解析 + /uploads/* 静态托管
+  await app.register(multipart, { limits: { fileSize: 5 * 1024 * 1024, files: 1 } });
+  await app.register(fastifyStatic, {
+    root: UPLOAD_DIR,
+    prefix: '/uploads/',
+    decorateReply: false,
   });
   // 全局限流 100/min；认证端点自身有更严的 20/min（见 lib/auth.ts），
   // 健康探针在路由上显式豁免（见 routes/health.ts）。
@@ -150,6 +160,7 @@ export async function buildApp() {
       await healthRoutes(api);
       await telemetryRoutes(api);
       await noteRoutes(api);
+      await uploadRoutes(api);
     },
     { prefix: '/api/v1' },
   );
