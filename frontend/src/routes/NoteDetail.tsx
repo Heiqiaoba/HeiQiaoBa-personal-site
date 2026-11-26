@@ -56,7 +56,8 @@ export function NoteDetail() {
     // 给代码块加复制按钮
     const timer = setTimeout(() => {
       document.querySelectorAll('.prose pre').forEach((pre) => {
-        if (pre.parentElement?.querySelector('.copy-code')) return;
+        // 检查与插入都限定在 pre 自身：pre 有 relative，absolute 按钮才会定位在代码块右上角
+        if (pre.querySelector('.copy-code')) return;
         const btn = document.createElement('button');
         btn.className = 'copy-code absolute right-2 top-2 rounded bg-white/10 px-2 py-1 text-xs text-gray-200 hover:bg-white/20';
         btn.textContent = 'Copy';
@@ -65,7 +66,7 @@ export function NoteDetail() {
           void navigator.clipboard.writeText(code).then(() => message.success('Copied'));
         };
         pre.classList.add('relative');
-        (pre.parentElement ?? pre).appendChild(btn);
+        pre.appendChild(btn); // 插进 pre 里，而不是父容器
       });
     }, 100);
     return () => clearTimeout(timer);
