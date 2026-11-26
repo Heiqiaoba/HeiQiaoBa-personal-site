@@ -5,7 +5,7 @@
  * 前端只负责展示与把用户操作转成查询参数（防抖搜索）。
  */
 import { useI18n } from '@/i18n';
-import { useAdminNotes, useDeleteNote } from '@/api/notes';
+import { useAdminNotes, useDeleteNote, usePublishNote } from '@/api/notes';
 import type { NoteListQuery } from '@/api/contract';
 import { Button, Input, Popconfirm, Table, Tag, Typography, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -27,6 +27,7 @@ export function AdminNotes({ mode = 'all' }: { mode?: 'all' | 'drafts' }) {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selected, setSelected] = useState<React.Key[]>([]);
   const del = useDeleteNote();
+  const publish = usePublishNote();
 
   // 搜索防抖：300ms 后才打到接口
   useEffect(() => {
@@ -93,6 +94,18 @@ export function AdminNotes({ mode = 'all' }: { mode?: 'all' | 'drafts' }) {
       title: '', key: 'actions', width: 130,
       render: (_, note) => (
         <span className="flex gap-1">
+          {note.status === 'draft' && (
+            <Popconfirm
+              title={t('admin.publishConfirm')}
+              onConfirm={() =>
+                publish.mutate(note.id, {
+                  onSuccess: () => message.success(t('admin.publishSuccess')),
+                })
+              }
+            >
+              <Button type="link" size="small" className="!px-1">{t('admin.publish')}</Button>
+            </Popconfirm>
+          )}
           <Link to={`/write/${note.id}`}>
             <Button type="link" size="small" className="!px-1">{t('admin.edit')}</Button>
           </Link>

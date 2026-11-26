@@ -81,3 +81,16 @@ export function useDeleteNote() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'notes'] }),
   });
 }
+
+/** 一键发布草稿：调 PATCH 把 status 改为 published，后端会自动补 publishedAt */
+export function usePublishNote() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => updateNote({ id, status: 'published' }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'notes'] });
+      qc.invalidateQueries({ queryKey: ['notes'] });
+      qc.invalidateQueries({ queryKey: ['tags'] });
+    },
+  });
+}
