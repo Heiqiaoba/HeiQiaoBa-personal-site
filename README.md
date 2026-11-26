@@ -40,7 +40,8 @@ pnpm dev
 ## 功能
 
 - **前台**：首页（数字花园风格，中英双语）、笔记列表/详情（Markdown）、项目/关于占位页
-- **写作台**：`/write` 笔记管理（新建/编辑/删除/发布状态），Markdown 正文 + 标签，仅管理员可见
+- **写作台**：`/write` 独立后台布局（侧边栏），含概览统计、文章管理、草稿箱、分栏 Markdown 编辑器，仅管理员可见
+  - `/write` 概览 · `/write/articles` 文章管理 · `/write/drafts` 草稿箱 · `/write/new` 新建
 - **权限**：公开注册关闭；作者账号由 `pnpm create-admin` 创建，后端 `requireAdmin` 是唯一安全边界
 
 ## 作者账号
