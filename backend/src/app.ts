@@ -21,6 +21,7 @@ import { logger, requestLogger } from './config/logger';
 import { auth } from './lib/auth';
 import { errorHandler } from './middleware/error-handler';
 import { healthRoutes } from './routes/health';
+import { noteRoutes } from './routes/notes';
 import { telemetryRoutes } from './routes/telemetry';
 
 /**
@@ -148,6 +149,7 @@ export async function buildApp() {
     async (api) => {
       await healthRoutes(api);
       await telemetryRoutes(api);
+      await noteRoutes(api);
     },
     { prefix: '/api/v1' },
   );

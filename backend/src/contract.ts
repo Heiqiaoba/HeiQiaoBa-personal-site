@@ -177,3 +177,60 @@ export const telemetryBatchSchema = z.object({
 });
 
 export type TelemetryBatch = z.infer<typeof telemetryBatchSchema>;
+
+// ============================================================
+// 笔记（Notes）契约：前后端各持一份，改动需同步。
+// ============================================================
+
+/** 笔记发布状态：draft 仅 admin 可见，published 公开 */
+export const noteStatusSchema = z.enum(['draft', 'published']);
+export type NoteStatus = z.infer<typeof noteStatusSchema>;
+
+/** 对外暴露的笔记结构 */
+export const noteSchema = z.object({
+  id: z.string(),
+  slug: z.string(),
+  title: z.string(),
+  summary: z.string(),
+  content: z.string(),
+  status: noteStatusSchema,
+  tags: z.array(z.string()),
+  publishedAt: z.string().datetime().nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type Note = z.infer<typeof noteSchema>;
+
+/** 新建笔记输入 */
+export const createNoteSchema = z.object({
+  slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/, 'slug 只能包含小写字母、数字和连字符'),
+  title: z.string().min(1).max(200),
+  summary: z.string().max(500).default(''),
+  content: z.string().min(1),
+  status: noteStatusSchema.default('draft'),
+  tags: z.array(z.string().min(1).max(30)).max(10).default([]),
+});
+export type CreateNoteInput = z.infer<typeof createNoteSchema>;
+
+/**
+ * 更新笔记输入：字段均可选，且**不带默认值**。
+ * 注意不能用 createNoteSchema.partial()：Zod 的 .default() 在 .partial() 后仍会生效，
+ * 导致只传 status 的 PATCH 把 tags 重置为 []、把其他字段重置为默认值。
+ */
+export const updateNoteSchema = z.object({
+  slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/).optional(),
+  title: z.string().min(1).max(200).optional(),
+  summary: z.string().max(500).optional(),
+  content: z.string().min(1).optional(),
+  status: noteStatusSchema.optional(),
+  tags: z.array(z.string().min(1).max(30)).max(10).optional(),
+});
+export type UpdateNoteInput = z.infer<typeof updateNoteSchema>;
+
+/** 分页查询参数（笔记列表） */
+export const noteListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  tag: z.string().optional(),
+});
+export type NoteListQuery = z.infer<typeof noteListQuerySchema>;

@@ -20,6 +20,7 @@
     "db:migrate": "tsx src/db/migrate.ts",
     "db:seed": "tsx src/db/seed.ts",
     "set-role": "tsx src/db/set-role.ts",
+    "create-admin": "tsx src/db/create-admin.ts",
     "openapi:export": "ENABLE_DOCS=true tsx src/scripts/export-openapi.ts openapi.json"
   },
   "dependencies": {

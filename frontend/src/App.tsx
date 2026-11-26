@@ -1,15 +1,20 @@
 /**
  * 应用根组件：定义整体布局与路由表。
  *
- * 由脚本从全栈模板裁剪生成，已移除演示业务（Todo / 用户列表 / 管理端）。
- * 当前仅保留骨架路由：首页、登录页与 404 兜底。真正的安全边界在后端接口。
+ * 路由：公开页面（首页/笔记列表/详情/项目/关于/登录）+ 管理后台（需 AdminGuard）。
+ * 真正的安全边界在后端 requireAdmin；前端守卫只负责体验层。
  */
+import { AdminGuard } from '@/components/AdminGuard';
 import { AppHeader } from '@/components/AppHeader';
 import { useI18n } from '@/i18n';
 import { Home } from '@/routes/Home';
 import { Login } from '@/routes/Login';
 import { NotFound } from '@/routes/NotFound';
+import { NoteDetail } from '@/routes/NoteDetail';
+import { Notes } from '@/routes/Notes';
 import { Placeholder } from '@/routes/Placeholder';
+import { AdminNotes } from '@/routes/admin/AdminNotes';
+import { NoteEditor } from '@/routes/admin/NoteEditor';
 import { ConfigProvider, Layout } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import { Route, Routes } from 'react-router-dom';
@@ -25,10 +30,14 @@ export function App() {
         <Content className="flex-1">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/notes" element={<Placeholder titleKey="home.notes" />} />
+            <Route path="/notes" element={<Notes />} />
+            <Route path="/notes/:slug" element={<NoteDetail />} />
             <Route path="/projects" element={<Placeholder titleKey="home.projects" />} />
             <Route path="/about" element={<Placeholder titleKey="home.about" />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/admin" element={<AdminGuard><AdminNotes /></AdminGuard>} />
+            <Route path="/admin/notes/new" element={<AdminGuard><NoteEditor /></AdminGuard>} />
+            <Route path="/admin/notes/:id" element={<AdminGuard><NoteEditor /></AdminGuard>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Content>
