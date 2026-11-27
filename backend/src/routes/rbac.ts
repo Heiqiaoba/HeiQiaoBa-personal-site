@@ -60,7 +60,8 @@ export async function rbacRoutes(app: FastifyInstance) {
   app.addHook('onResponse', async (req, reply) => {
     if (req.method === 'GET' || reply.statusCode >= 400) return;
     const path = req.url.split('?')[0] ?? '';
-    if (!path.startsWith('/admin/')) return;
+    // 路由挂在 /api/v1 前缀下，req.url 形如 /api/v1/admin/users，用 includes 判断
+    if (!path.includes('/admin/')) return;
     void audit(req.auth?.userId, `${req.method} ${path}`, path, { statusCode: reply.statusCode });
   });
 
