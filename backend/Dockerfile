@@ -16,8 +16,11 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/drizzle ./drizzle
 COPY --from=builder /app/package.json /app/pnpm-lock.yaml ./
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder --chown=app:app /app/docker-entrypoint.sh ./docker-entrypoint.sh
 USER app
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
   CMD wget -qO- http://127.0.0.1:3000/api/v1/health || exit 1
+# entrypoint 先跑迁移再启动；compose 里的 command 覆盖仍然有效
+ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["node", "dist/index.js"]

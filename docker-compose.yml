@@ -46,8 +46,7 @@ services:
       DOCS_TOKEN: ${DOCS_TOKEN:-}
       DB_POOL_MAX: ${DB_POOL_MAX:-20}
       LOG_LEVEL: ${LOG_LEVEL:-info}
-    # 先迁移再启动；迁移幂等，可重复执行
-    command: sh -c "node dist/db/migrate.js && node dist/index.js"
+    # 镜像的 entrypoint 会自动执行迁移（幂等），这里无需重复指定
     volumes:
       - uploads_data:/app/uploads
     depends_on:

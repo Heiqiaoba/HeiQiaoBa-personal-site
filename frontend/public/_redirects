@@ -1,0 +1,9 @@
+# Cloudflare Pages 同源反向代理
+# 把下面的 BACKEND_URL 替换成你的 Render 后端地址（不带末尾斜杠），例如：
+# https://heiqiao-backend.onrender.com
+#
+# 200 = 代理重写（浏览器地址栏不变），保证 Cookie 同源，登录不会掉线。
+
+/api/*        https://BACKEND_URL/api/:splat        200
+/uploads/*    https://BACKEND_URL/uploads/:splat    200
+/feed.xml     https://BACKEND_URL/feed.xml          200
