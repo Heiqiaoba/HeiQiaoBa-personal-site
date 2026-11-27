@@ -30,6 +30,7 @@ export const ALL_PERMISSIONS = [
   { code: 'role:manage', name: '管理角色', description: '新建/编辑/删除角色及分配权限', group: 'system' },
   { code: 'permission:read', name: '查看权限', description: '查看权限列表', group: 'system' },
   { code: 'permission:manage', name: '管理权限', description: '新增/编辑/删除权限点', group: 'system' },
+  { code: 'audit:read', name: '查看操作日志', description: '查看管理员敏感操作记录', group: 'system' },
 ] as const;
 
 /**

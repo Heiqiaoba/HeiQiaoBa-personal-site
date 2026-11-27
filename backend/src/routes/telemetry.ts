@@ -15,7 +15,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { requirePermission, resolveSession } from '../lib/context.js';
 import { writeTelemetry } from '../lib/telemetry-sink.js';
 import { parseBody, parseQuery } from '../middleware/validation.js';
-import { getDashboard } from '../services/telemetry.service.js';
+import { getDashboard, telemetryUsage } from '../services/telemetry.service.js';
 
 /** 注册埋点接收端点 */
 export async function telemetryRoutes(app: FastifyInstance) {
@@ -44,7 +44,8 @@ export async function telemetryRoutes(app: FastifyInstance) {
     { onRequest: [requirePermission('analytics:read')], schema: { tags: ['telemetry'], summary: '埋点看板数据' } },
     async (req) => {
       const query = parseQuery(telemetryQuerySchema, req);
-      return getDashboard(query);
+      const [dashboard, usage] = await Promise.all([getDashboard(query), telemetryUsage()]);
+      return { ...dashboard, usage };
     },
   );
 }

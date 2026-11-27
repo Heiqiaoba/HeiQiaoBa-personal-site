@@ -55,6 +55,9 @@ export function Analytics() {
 
       {data && (
         <>
+          <div className="mb-4 text-xs text-[color:var(--text-muted)]">
+            {t('analytics.usage')}: {data.usage?.total ?? 0} · {t('analytics.retention')}: {data.usage?.retentionDays ?? 90}{t('analytics.days')}
+          </div>
           <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {stats.map((s) => (
               <div key={s.label} className="stat-card">

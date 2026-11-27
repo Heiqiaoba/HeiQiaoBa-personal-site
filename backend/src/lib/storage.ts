@@ -9,6 +9,9 @@
  */
 import { mkdir, readdir, stat, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import {
+  S3Client, PutObjectCommand, ListObjectsV2Command, DeleteObjectCommand,
+} from '@aws-sdk/client-s3';
 import { env } from '../config/env.js';
 
 export type StoredFile = {
@@ -58,9 +61,9 @@ class LocalStorage implements StorageProvider {
   }
 }
 
-/** ---- S3 兼容实现（占位，待配置后启用） ---- */
+/** ---- S3 兼容实现（R2 / OSS / S3）---- */
 class S3Storage implements StorageProvider {
-  private config = {
+  private cfg = {
     endpoint: env.S3_ENDPOINT,
     bucket: env.S3_BUCKET,
     accessKey: env.S3_ACCESS_KEY,
@@ -68,27 +71,51 @@ class S3Storage implements StorageProvider {
     publicUrl: env.S3_PUBLIC_URL,
   };
 
-  private assertConfig() {
-    const c = this.config;
+  private client() {
+    const c = this.cfg;
     if (!c.endpoint || !c.bucket || !c.accessKey || !c.secretKey || !c.publicUrl) {
       throw new Error(
         'S3 storage selected but not configured. Set S3_ENDPOINT, S3_BUCKET, S3_ACCESS_KEY, S3_SECRET_KEY, S3_PUBLIC_URL.',
       );
     }
+    return new S3Client({
+      region: 'auto',
+      endpoint: c.endpoint,
+      credentials: { accessKeyId: c.accessKey, secretAccessKey: c.secretKey },
+      forcePathStyle: false,
+    });
   }
 
-  async put(name: string, _data: Buffer, _mime: string): Promise<string> {
-    this.assertConfig();
-    // TODO: 用 @aws-sdk/client-s3 上传到 this.config.bucket
-    throw new Error('S3 storage provider is not implemented yet. Use STORAGE_DRIVER=local.');
+  private publicUrl(name: string) {
+    return `${this.cfg.publicUrl!.replace(/\/+$/, '')}/${name}`;
   }
+
+  async put(name: string, data: Buffer, mime: string): Promise<string> {
+    await this.client().send(
+      new PutObjectCommand({ Bucket: this.cfg.bucket!, Key: name, Body: data, ContentType: mime }),
+    );
+    return this.publicUrl(name);
+  }
+
   async list(): Promise<StoredFile[]> {
-    this.assertConfig();
-    throw new Error('S3 storage provider is not implemented yet.');
+    const objects = await this.client().send(
+      new ListObjectsV2Command({ Bucket: this.cfg.bucket! }),
+    );
+    return (objects.Contents ?? [])
+      .filter((o) => o.Key && !o.Key.startsWith('_') && !o.Key.endsWith('/'))
+      .map((o) => ({
+        name: o.Key!,
+        url: this.publicUrl(o.Key!),
+        size: o.Size ?? 0,
+        createdAt: (o.LastModified ?? new Date()).toISOString(),
+      }))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
-  async remove(_name: string) {
-    this.assertConfig();
-    throw new Error('S3 storage provider is not implemented yet.');
+
+  async remove(name: string) {
+    // 防路径穿越：只允许简单文件名
+    if (!/^[a-zA-Z0-9._-]+$/.test(name)) throw new Error('Invalid filename');
+    await this.client().send(new DeleteObjectCommand({ Bucket: this.cfg.bucket!, Key: name }));
   }
 }
 

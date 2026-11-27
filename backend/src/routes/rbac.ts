@@ -22,6 +22,7 @@ import { requireAuth, requirePermission } from '../lib/context.js';
 import { Errors } from '../lib/errors.js';
 import { parseBody, parseParams } from '../middleware/validation.js';
 import { countActiveAdmins, permissionsForUser } from '../services/rbac.service.js';
+import { audit, listAuditLogs } from '../services/audit.service.js';
 
 const idParam = z.object({ id: z.string().min(1) });
 
@@ -55,6 +56,17 @@ async function rolesWithPermissions() {
 }
 
 export async function rbacRoutes(app: FastifyInstance) {
+  // 审计钩子：所有本次路由组内成功的写操作自动记录（GET/读接口不记）
+  app.addHook('onResponse', async (req, reply) => {
+    if (req.method === 'GET' || reply.statusCode >= 400) return;
+    const path = req.url.split('?')[0] ?? '';
+    if (!path.startsWith('/admin/')) return;
+    void audit(req.auth?.userId, `${req.method} ${path}`, path, { statusCode: reply.statusCode });
+  });
+
+  // 审计日志查询（仅管理员）
+  app.get('/admin/audit-logs', { onRequest: [requirePermission('audit:read')] }, async () => listAuditLogs());
+
   // 当前登录用户的角色与权限（前端按此控制按钮显示）
   app.get('/me/permissions', { onRequest: [requireAuth] }, async (req) => {
     return permissionsForUser(req.auth!.userId);

@@ -6,6 +6,7 @@
  * 也不被其他模块导入（测试走 buildApp + inject，不经过这里）。
  */
 import { buildApp } from './app.js';
+import { cleanupTelemetry } from './services/telemetry.service.js';
 import { env } from './config/env.js';
 import { logger } from './config/logger.js';
 import { closeDb } from './db/index.js';
@@ -14,6 +15,9 @@ import { closeDb } from './db/index.js';
 async function main() {
   const app = await buildApp();
   try {
+    // 启动时清理超过 90 天的埋点（失败不影响服务启动）
+    const removed = await cleanupTelemetry().catch(() => 0);
+    if (removed > 0) logger.info({ removed }, 'Old telemetry events cleaned up');
     await app.listen({ port: env.PORT, host: env.HOST });
     logger.info(`Server listening on ${env.HOST}:${env.PORT}`);
     logger.info(`API base: ${env.BETTER_AUTH_URL}/api/v1`);

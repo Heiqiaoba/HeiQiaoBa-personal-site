@@ -9,6 +9,7 @@ export type TelemetryDashboard = {
   byType: Array<{ type: string; count: number }>;
   daily: Array<{ date: string; count: number }>;
   topPaths: Array<{ path: string; count: number }>;
+  usage: { total: number; retentionDays: number; oldest: string | null };
   recent: Array<{
     id: string;
     type: string;

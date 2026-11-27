@@ -57,6 +57,13 @@
       "when": 1795771764400,
       "tag": "0007_even_black_widow",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1795772047421,
+      "tag": "0008_mute_tag",
+      "breakpoints": true
     }
   ]
 }

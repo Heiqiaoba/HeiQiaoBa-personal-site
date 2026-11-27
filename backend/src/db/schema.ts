@@ -69,6 +69,23 @@ export const likes = pgTable(
 );
 
 /**
+ * 操作审计日志：记录敏感管理操作（角色/权限/用户变更）。
+ */
+export const auditLogs = pgTable(
+  'audit_logs',
+  {
+    id: text('id').primaryKey(),
+    actorId: text('actor_id'),
+    actorEmail: text('actor_email'),
+    action: text('action').notNull(),
+    target: text('target').notNull().default(''),
+    detail: jsonb('detail').$type<Record<string, unknown>>(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('audit_created_idx').on(table.createdAt)],
+);
+
+/**
  * 阅读量去重：同一访客（visitorId）24 小时内对同一笔记只计一次阅读。
  */
 export const noteViews = pgTable(

@@ -28,6 +28,7 @@ import { Roles } from '@/routes/admin/Roles';
 import { Permissions } from '@/routes/admin/Permissions';
 import { Account } from '@/routes/Account';
 import { Favorites } from '@/routes/Favorites';
+import { AuditLogs } from '@/routes/admin/AuditLogs';
 import { ConfigProvider, Layout } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import { Route, Routes, useLocation } from 'react-router-dom';
@@ -63,6 +64,7 @@ export function App() {
             <Route path="/write/users" element={<AdminGuard><PermissionGuard perm="user:read"><DeskLayout><Users /></DeskLayout></PermissionGuard></AdminGuard>} />
             <Route path="/write/roles" element={<AdminGuard><PermissionGuard perm="role:read"><DeskLayout><Roles /></DeskLayout></PermissionGuard></AdminGuard>} />
             <Route path="/write/permissions" element={<AdminGuard><PermissionGuard perm="permission:read"><DeskLayout><Permissions /></DeskLayout></PermissionGuard></AdminGuard>} />
+            <Route path="/write/audit" element={<AdminGuard><PermissionGuard perm="audit:read"><DeskLayout><AuditLogs /></DeskLayout></PermissionGuard></AdminGuard>} />
             <Route path="/write/settings" element={<AdminGuard><DeskLayout><Account /></DeskLayout></AdminGuard>} />
             <Route path="/write/new" element={<AdminGuard><NoteEditor /></AdminGuard>} />
             <Route path="/write/:id" element={<AdminGuard><NoteEditor /></AdminGuard>} />

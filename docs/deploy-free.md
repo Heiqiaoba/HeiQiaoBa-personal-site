@@ -63,6 +63,18 @@ CORS_ORIGIN=<前端 workers.dev 地址>
 DB_POOL_MAX=5
 ENABLE_DOCS=false
 LOG_LEVEL=info
+# 可选：Giscus 评论（四项全填才启用，运行时生效，改后重启服务即可）
+# GISCUS_REPO=Heiqiaoba/repo
+# GISCUS_REPO_ID=R_xxx
+# GISCUS_CATEGORY=Announcements
+# GISCUS_CATEGORY_ID=DIC_xxx
+# 可选：图片存到 S3 兼容服务（如 Cloudflare R2），解决 Render 重启丢图
+# STORAGE_DRIVER=s3
+# S3_ENDPOINT=https://xxx.r2.cloudflarestorage.com
+# S3_BUCKET=heiqiaoba-images
+# S3_ACCESS_KEY=xxx
+# S3_SECRET_KEY=xxx
+# S3_PUBLIC_URL=https://images.example.com
 ```
 
 > ⚠️ `BETTER_AUTH_URL` / `CORS_ORIGIN` 填**前端地址**，不是 Render 地址，否则会话 Cookie 与重定向会错。
@@ -150,9 +162,10 @@ DATABASE_URL='<Neon连接串>' node dist/db/create-admin.js <email> <name> '<pas
 ## 已知限制与后续
 
 1. **Render 免费层休眠**：15 分钟无请求后停机，下次访问冷启动 30~50 秒，期间可能短暂 502，重试即可。介意就升级付费层（$7/月）。
-2. **图片重启丢失**：`uploads/` 在 Render 容器内，重启/重新部署会清空。要持久化可实装 `S3Storage` 接 Cloudflare R2（免费 10GB），`StorageProvider` 抽象已留好。
+2. **图片持久化**：默认 `local` 存在容器内，重启会丢。已实装 `S3Storage`——填 `STORAGE_DRIVER=s3` + 5 个 `S3_*` 变量（推荐 Cloudflare R2，免费 10GB）即可持久化。
 3. **workers.dev 域名**：国内访问偶有不稳定，正式使用建议绑定自己的域名（无需备案，Cloudflare 海外节点）。
 4. **数据库连接数**：Neon 免费层连接少，`DB_POOL_MAX=5` 已按此设置。
+5. **埋点数据**：保留 90 天，服务启动时自动清理（`cleanupTelemetry`），看板显示存储用量。
 
 ## 本项目已做的部署准备
 

@@ -21,6 +21,7 @@ const NAV: ReadonlyArray<{ to: string; key: NavKey; icon: string; end: boolean; 
   { to: '/write/users', key: 'users.title', icon: '♙', end: false, perm: 'user:read' },
   { to: '/write/roles', key: 'roles.title', icon: '◈', end: false, perm: 'role:read' },
   { to: '/write/permissions', key: 'perms.title', icon: '⚑', end: false, perm: 'permission:read' },
+  { to: '/write/audit', key: 'audit.title', icon: '▣', end: false, perm: 'audit:read' },
   { to: '/write/settings', key: 'settings.title', icon: '⚙', end: false, perm: null },
 ];
 

@@ -12,6 +12,31 @@ import { and, count, desc, eq, gte, sql } from 'drizzle-orm';
 import type { TelemetryQuery } from '../contract.js';
 import { db, schema } from '../db/index.js';
 
+/** 埋点保留天数 */
+export const TELEMETRY_RETENTION_DAYS = 90;
+
+/** 删除超过保留期的埋点事件，返回删除条数。每次服务启动时调用一次。 */
+export async function cleanupTelemetry(): Promise<number> {
+  const cutoff = new Date(Date.now() - TELEMETRY_RETENTION_DAYS * 24 * 60 * 60 * 1000);
+  const deleted = await db
+    .delete(schema.telemetryEvents)
+    .where(sql`${schema.telemetryEvents.createdAt} < ${cutoff}`)
+    .returning({ id: schema.telemetryEvents.id });
+  return deleted.length;
+}
+
+/** 埋点存储用量（总条数与最早时间） */
+export async function telemetryUsage() {
+  const [row] = await db
+    .select({ total: count(), oldest: sql<Date>`min(${schema.telemetryEvents.createdAt})` })
+    .from(schema.telemetryEvents);
+  return {
+    total: row?.total ?? 0,
+    retentionDays: TELEMETRY_RETENTION_DAYS,
+    oldest: row?.oldest ? new Date(row.oldest).toISOString() : null,
+  };
+}
+
 /** 取 N 天前的起点（含当天 00:00 UTC） */
 function since(days: number): Date {
   const d = new Date();
