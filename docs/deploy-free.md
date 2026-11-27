@@ -106,8 +106,18 @@ DATABASE_URL='<Neon连接串>' node dist/db/create-admin.js <email> <name> '<pas
 - [ ] 详情页点赞按钮可用，刷新后状态保持（按浏览器本地 visitorId 去重）
 - [ ] 阅读量打开详情后 +1
 - [ ] 埋点上报：浏览器 Network 可见 `POST /api/v1/telemetry` 返回 202（含 page_view / note_view）
+- [ ] 作者账号进后台 → 侧边栏「埋点看板」，能看到事件总数、独立访客、每日趋势、事件分布、热门页面与最近事件
 - [ ] 作者账号能进后台，新建/发布/删除笔记
 - [ ] 退出登录后会话状态正常（Cookie 同源成功）
+
+### 埋点看板说明
+
+埋点事件落在 `telemetry_events` 表（迁移 `0004` 自动建表），由 `src/lib/telemetry-sink.ts` 在接收事件时写入。看板数据在 `GET /api/v1/telemetry/dashboard?days=7`，**仅管理员可访问**（`requireAdmin` 守卫，普通用户返回 401）。看板支持 1/7/30 天区间切换，展示：
+
+- 概览卡片：事件总数、独立访客（按 sessionId 去重）、区间天数、page_view 数
+- 每日趋势柱状图、事件类型分布、热门页面 TOP10、最近事件明细
+
+> 看板在写作台侧边栏「埋点看板」入口。埋点只记录脱敏路径（无 query）与标量 props，登录时由后端补全 userId。
 
 > 注意：`seed.ts` 没有种子数据，首页初始为空，登录后自行发布笔记即可。
 
