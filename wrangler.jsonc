@@ -2,6 +2,11 @@
   "name": "heiqiaoba-personal-site",
   "compatibility_date": "2026-11-27",
   "main": "./src/index.ts",
+  // 后端地址是公开 URL，不是凭据，写进配置随每次部署自动生效，
+  // 避免 Cloudflare 面板里的 Secret 在 Workers Builds 重新部署后丢失。
+  "vars": {
+    "BACKEND_URL": "https://heiqiaoba-personal-site.onrender.com"
+  },
   "assets": {
     "directory": "./frontend/dist",
     "binding": "ASSETS",

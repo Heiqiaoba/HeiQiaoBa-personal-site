@@ -11,7 +11,7 @@
  * 代理后浏览器全程只认自己的域名，Cookie 正常。
  *
  * BACKEND_URL 通过 `wrangler secret put BACKEND_URL` 配置，不写死在代码里，
- * 这样换后端地址无需重新构建前端。
+ * 地址写在 wrangler.jsonc 的 vars 里，随每次部署自动生效；换后端地址只需改配置提交。
  */
 
 interface Env {
