@@ -107,9 +107,10 @@ instance.interceptors.response.use(
     if (err.response) {
       const { status, data, headers } = err.response;
       const body = data ?? {};
-      // 5xx（典型如 Render 冷启动时的 502）→ 触发后端唤醒流程；
-      // 401/403/404/校验错误等业务错误不触发，避免误判。
-      if (status >= 500) backendWake.notifyApiFailure();
+      // 只有「后端没起来」类错误才触发唤醒：502/503/504（Render 冷启动时网关返回的
+      // Bad/Unavailable Gateway）。500 是后端活着但自身报错（如应用 bug），
+      // 不该误报成「正在唤醒」——那种错误由页面自己的错误态处理。
+      if (status === 502 || status === 503 || status === 504) backendWake.notifyApiFailure();
       const error = new ApiError({
         status,
         code: body.error?.code ?? 'HTTP_ERROR',

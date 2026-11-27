@@ -17,6 +17,9 @@ COPY --from=builder /app/drizzle ./drizzle
 COPY --from=builder /app/package.json /app/pnpm-lock.yaml ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder --chown=app:app /app/docker-entrypoint.sh ./docker-entrypoint.sh
+# 预建 uploads 并授权给 app 用户：否则运行时 storage.list()/put() 里的
+# mkdir('/app/uploads') 会因 /app 属 root 而 EACCES，导致 /api/v1/images 500。
+RUN mkdir -p /app/uploads && chown -R app:app /app/uploads
 USER app
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \

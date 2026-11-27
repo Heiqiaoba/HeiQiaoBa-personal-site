@@ -5,6 +5,24 @@
 import { AxiosError, AxiosHeaders, type InternalAxiosRequestConfig } from 'axios';
 import { describe, expect, it, vi } from 'vitest';
 import { ApiError, apiClient, setTokenProvider } from './client';
+import { backendWake } from '@/lib/backendWake';
+
+/** 构造一个指定状态码的 axios 错误 */
+function httpError(status: number) {
+  return new AxiosError(
+    'Request failed',
+    'ERR_BAD_REQUEST',
+    {} as InternalAxiosRequestConfig,
+    {},
+    {
+      status,
+      statusText: 'Error',
+      data: { error: { code: 'INTERNAL', message: 'Internal server error' } },
+      headers: new AxiosHeaders(),
+      config: {} as InternalAxiosRequestConfig,
+    },
+  );
+}
 
 /**
  * 从真实 axios 实例中取出已注册的响应拒绝（rejected）处理函数。
@@ -34,6 +52,22 @@ function getRequestFulfilledHandler() {
 }
 
 describe('api client', () => {
+  // 回归测试：应用自身的 500（如 /images EACCES）不该误报成「后端休眠唤醒」。
+  // 只有 502/503/504（网关层错误）才应触发唤醒流程。
+  it('does not trigger backend wake on a 500 application error', async () => {
+    const spy = vi.spyOn(backendWake, 'notifyApiFailure').mockImplementation(() => {});
+    await expect(getResponseRejectHandler()(httpError(500))).rejects.toBeInstanceOf(ApiError);
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it('triggers backend wake on a 502 gateway error', async () => {
+    const spy = vi.spyOn(backendWake, 'notifyApiFailure').mockImplementation(() => {});
+    await expect(getResponseRejectHandler()(httpError(502))).rejects.toBeInstanceOf(ApiError);
+    expect(spy).toHaveBeenCalledOnce();
+    spy.mockRestore();
+  });
+
   // 服务端错误体应被完整保留：code/message/status/requestId 都能从 ApiError 上读到，
   // 保证业务层可用统一字段做分支与问题追踪。
   it('normalizes a server error response into ApiError with code and requestId', async () => {
