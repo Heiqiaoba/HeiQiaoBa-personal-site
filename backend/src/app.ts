@@ -19,7 +19,7 @@ import swaggerUi from '@fastify/swagger-ui';
 import { toNodeHandler } from 'better-auth/node';
 import Fastify from 'fastify';
 import { env, isProd } from './config/env.js';
-import { logger, requestLogger } from './config/logger.js';
+import { requestLogger } from './config/logger.js';
 import { auth } from './lib/auth.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { feedRoutes } from './routes/feed.js';
@@ -40,7 +40,10 @@ import { UPLOAD_DIR } from './lib/storage.js';
  */
 export async function buildApp() {
   const app = Fastify({
-    logger: isProd ? logger : false,
+    // Fastify accepts a config object or `true`, not a Pino instance.
+    // Our Pino logger already sets level/redact, so let Fastify build its own
+    // internal logger with the same level; request logging uses requestLogger.
+    logger: isProd ? { level: env.LOG_LEVEL ?? 'info' } : false,
     trustProxy: true,
     genReqId: () => crypto.randomUUID(),
   });
