@@ -73,13 +73,11 @@ LOG_LEVEL=info
 
 ## 第 4 步：配置同源代理（BACKEND_URL）
 
-在 Cloudflare 项目 → 设置 → 运行时变量和密钥（Variables and Secrets）添加：
+`BACKEND_URL` 已写在 [`wrangler.jsonc`](../wrangler.jsonc) 的 `vars` 里，**每次部署自动生效**，不需要在 Cloudflare 面板里手动添加。换后端地址时改这个文件提交即可。
 
-- 类型选 **密钥 / Secret**（不要选文本变量）
-- 名称：`BACKEND_URL`
-- 值：`https://<你的后端>.onrender.com`
+> 早期版本让用户在面板里手动加 Secret，但 Workers Builds 从 Git 重新部署时可能丢失该值，现已改为代码内声明，一劳永逸。
 
-点**部署**生效。之后前端的 `/api`、`/uploads`、`/feed.xml` 都会转发到后端。
+前端的 `/api`、`/uploads`、`/feed.xml` 都会由 Worker 转发到该地址。
 
 ## 第 5 步：创建账号
 
