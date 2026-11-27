@@ -48,6 +48,26 @@ export const noteTags = pgTable(
   (table) => [uniqueIndex('note_tags_unique').on(table.noteId, table.tagId)],
 );
 
+/**
+ * 点赞表：一个用户对一篇笔记只能赞一次（uniqueIndex 保证）。
+ * userId/userId 为匿名访客生成的稳定标识（存 localStorage），无需登录即可点赞。
+ */
+export const likes = pgTable(
+  'likes',
+  {
+    id: text('id').primaryKey(),
+    noteId: text('note_id')
+      .notNull()
+      .references(() => notes.id, { onDelete: 'cascade' }),
+    userId: text('user_id').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('likes_note_user_unique').on(table.noteId, table.userId),
+    index('likes_note_idx').on(table.noteId),
+  ],
+);
+
 export type NoteRow = typeof notes.$inferSelect;
 export type NewNoteRow = typeof notes.$inferInsert;
 

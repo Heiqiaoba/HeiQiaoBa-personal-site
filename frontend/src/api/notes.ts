@@ -7,6 +7,33 @@ import type { CreateNoteInput, Note, NoteListQuery, UpdateNoteInput } from './co
 import { api } from './client';
 
 type NoteList = { items: Note[]; total: number; page: number; pageSize: number };
+type LikeResponse = { liked: boolean; likeCount: number };
+
+const VISITOR_KEY = 'visitor_id';
+
+/**
+ * 访客标识：localStorage 持久化，登录前后都稳定，用于点赞去重。
+ * 隐私模式下存储不可用则退化为内存 ID（刷新后变化，可接受）。
+ */
+let memoryVisitorId: string | null = null;
+export function getVisitorId(): string {
+  try {
+    const existing = localStorage.getItem(VISITOR_KEY);
+    if (existing) return existing;
+    const id =
+      typeof crypto?.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+    localStorage.setItem(VISITOR_KEY, id);
+    return id;
+  } catch {
+    memoryVisitorId ??=
+      typeof crypto?.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+    return memoryVisitorId;
+  }
+}
 
 async function fetchNotes(query: Partial<NoteListQuery> = {}): Promise<NoteList> {
   return api.get<NoteList>('/notes', { params: query });
@@ -48,6 +75,32 @@ export function useTags() {
 }
 export function useNote(slug: string) {
   return useQuery({ queryKey: ['note', slug], queryFn: () => fetchNote(slug) });
+}
+
+/** 当前访客是否已点赞某笔记 */
+export function useLikeStatus(noteId: string | undefined) {
+  return useQuery({
+    queryKey: ['like', noteId],
+    queryFn: () =>
+      api.get<{ liked: boolean }>('/notes/' + noteId + '/like', {
+        params: { visitorId: getVisitorId() },
+      }),
+    enabled: !!noteId,
+  });
+}
+
+/** 点赞 / 取消点赞（切换） */
+export function useToggleLike(noteId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      api.post<LikeResponse>(`/notes/${noteId}/like`, { visitorId: getVisitorId() }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['like', noteId] });
+      void qc.invalidateQueries({ queryKey: ['note'] });
+      void qc.invalidateQueries({ queryKey: ['notes'] });
+    },
+  });
 }
 
 // ---- 管理端 ----

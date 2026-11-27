@@ -56,6 +56,7 @@ export const noteSchema = z.object({
   content: z.string(),
   status: noteStatusSchema,
   viewCount: z.number().int().default(0),
+  likeCount: z.number().int().default(0),
   tags: z.array(z.string()),
   publishedAt: z.string().datetime().nullable(),
   createdAt: z.string().datetime(),

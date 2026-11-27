@@ -11,8 +11,8 @@ import { Errors } from '../lib/errors.js';
 
 type NoteRow = typeof schema.notes.$inferSelect;
 
-/** DB 行 → API DTO（含标签） */
-function toDTO(row: NoteRow, tagNames: string[]): Note {
+/** DB 行 → API DTO（含标签与点赞数） */
+function toDTO(row: NoteRow, tagNames: string[], likeCount = 0): Note {
   return {
     id: row.id,
     slug: row.slug,
@@ -21,11 +21,25 @@ function toDTO(row: NoteRow, tagNames: string[]): Note {
     content: row.content,
     status: row.status as Note['status'],
     viewCount: row.viewCount,
+    likeCount,
     tags: tagNames,
     publishedAt: row.publishedAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
+}
+
+/** 批量统计笔记点赞数 */
+async function likeCountsForNotes(noteIds: string[]): Promise<Map<string, number>> {
+  const result = new Map<string, number>();
+  if (!noteIds.length) return result;
+  const rows = await db
+    .select({ noteId: schema.likes.noteId, count: sql<number>`count(*)::int` })
+    .from(schema.likes)
+    .where(inArray(schema.likes.noteId, noteIds))
+    .groupBy(schema.likes.noteId);
+  for (const row of rows) result.set(row.noteId, row.count);
+  return result;
 }
 
 /** 批量取笔记对应的标签名 */
@@ -110,8 +124,9 @@ export async function listNotes(query: NoteListQuery, publicOnly: boolean) {
     .limit(query.pageSize)
     .offset((query.page - 1) * query.pageSize);
   const tagMap = await tagsForNotes(rows.map((r) => r.id));
+  const likeMap = await likeCountsForNotes(rows.map((r) => r.id));
   return {
-    items: rows.map((r) => toDTO(r, tagMap.get(r.id) ?? [])),
+    items: rows.map((r) => toDTO(r, tagMap.get(r.id) ?? [], likeMap.get(r.id) ?? 0)),
     total: count,
     page: query.page,
     pageSize: query.pageSize,
@@ -123,7 +138,8 @@ export async function getNoteBySlug(slug: string, publicOnly: boolean): Promise<
   const [row] = await db.select().from(schema.notes).where(eq(schema.notes.slug, slug)).limit(1);
   if (!row || (publicOnly && row.status !== 'published')) throw Errors.notFound('Note not found');
   const tagMap = await tagsForNotes([row.id]);
-  return toDTO(row, tagMap.get(row.id) ?? []);
+  const likeMap = await likeCountsForNotes([row.id]);
+  return toDTO(row, tagMap.get(row.id) ?? [], likeMap.get(row.id) ?? 0);
 }
 
 /** 阅读量 +1（SQL 原子自增，不影响本次响应返回的计数） */
@@ -185,7 +201,8 @@ export async function updateNote(id: string, input: UpdateNoteInput): Promise<No
   if (input.tags !== undefined) await syncTags(id, input.tags);
   const [updated] = await db.select().from(schema.notes).where(eq(schema.notes.id, id)).limit(1);
   const tagMap = await tagsForNotes([id]);
-  return toDTO(updated!, tagMap.get(id) ?? []);
+  const likeMap = await likeCountsForNotes([id]);
+  return toDTO(updated!, tagMap.get(id) ?? [], likeMap.get(id) ?? 0);
 }
 
 /** 删除笔记（关联标签会自动级联删除） */
@@ -200,7 +217,45 @@ export async function getNoteById(id: string): Promise<Note> {
   const [row] = await db.select().from(schema.notes).where(eq(schema.notes.id, id)).limit(1);
   if (!row) throw Errors.notFound('Note not found');
   const tagMap = await tagsForNotes([id]);
-  return toDTO(row, tagMap.get(id) ?? []);
+  const likeMap = await likeCountsForNotes([id]);
+  return toDTO(row, tagMap.get(id) ?? [], likeMap.get(id) ?? 0);
+}
+
+/**
+ * 切换点赞：同一 noteId + userId 已有点赞则取消，否则新增。
+ * 返回 { liked, likeCount }。userId 由客户端生成并持久化（登录前后稳定）。
+ */
+export async function toggleLike(noteId: string, userId: string): Promise<{ liked: boolean; likeCount: number }> {
+  const [note] = await db.select().from(schema.notes).where(eq(schema.notes.id, noteId)).limit(1);
+  if (!note || note.status !== 'published') throw Errors.notFound('Note not found');
+
+  const existing = await db
+    .select({ id: schema.likes.id })
+    .from(schema.likes)
+    .where(and(eq(schema.likes.noteId, noteId), eq(schema.likes.userId, userId)))
+    .limit(1);
+
+  if (existing.length) {
+    await db.delete(schema.likes).where(eq(schema.likes.id, existing[0]!.id));
+  } else {
+    await db.insert(schema.likes).values({ id: crypto.randomUUID(), noteId, userId });
+  }
+
+  const countRows = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(schema.likes)
+    .where(eq(schema.likes.noteId, noteId));
+  return { liked: !existing.length, likeCount: countRows[0]?.count ?? 0 };
+}
+
+/** 查询某访客是否已点赞（供详情页展示按钮状态） */
+export async function hasLiked(noteId: string, userId: string): Promise<boolean> {
+  const rows = await db
+    .select({ id: schema.likes.id })
+    .from(schema.likes)
+    .where(and(eq(schema.likes.noteId, noteId), eq(schema.likes.userId, userId)))
+    .limit(1);
+  return rows.length > 0;
 }
 
 /** 标签列表（含笔记计数，仅已发布） */

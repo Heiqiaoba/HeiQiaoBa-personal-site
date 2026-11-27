@@ -39,9 +39,9 @@ export const auth = betterAuth({
     minPasswordLength: 8,
     maxPasswordLength: 128,
     autoSignIn: true,
-    // 个人站不开放公开注册：作者账号由 create-admin 脚本创建，
-    // 访客无法自行注册，权限边界从源头收紧。
-    disableSignUp: true,
+    // 开放公开注册：访客可注册「读者」账号用于阅读/点赞/埋点身份；
+    // 写作等管理接口仍由后端 requireAdmin 守卫，新用户默认 role=user 无写权限。
+    disableSignUp: false,
   },
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 天

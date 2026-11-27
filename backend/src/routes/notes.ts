@@ -4,14 +4,17 @@
  * 公开接口只返回 published；写入接口全部挂 requireAdmin 守卫（唯一安全边界）。
  */
 import type { FastifyInstance } from 'fastify';
-import { createNoteSchema, noteListQuerySchema, updateNoteSchema } from '../contract.js';
-import { requireAdmin } from '../lib/context.js';
+import { createNoteSchema, likeRequestSchema, noteListQuerySchema, updateNoteSchema } from '../contract.js';
+import { optionalAuth, requireAdmin } from '../lib/context.js';
 import { parseBody, parseParams, parseQuery } from '../middleware/validation.js';
 import * as noteService from '../services/note.service.js';
 import { z } from 'zod';
 
 const idParam = z.object({ id: z.string().min(1) });
 const slugParam = z.object({ slug: z.string().min(1) });
+
+/** 点赞限流：同一 visitorId 每分钟最多 60 次，防刷；key 取 visitorId 而非 IP */
+const likeRateLimit = { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } };
 
 export async function noteRoutes(app: FastifyInstance) {
   // ---- 公开接口 ----
@@ -29,6 +32,25 @@ export async function noteRoutes(app: FastifyInstance) {
   });
 
   app.get('/tags', async () => noteService.listTags());
+
+  // ---- 点赞（公开，访客无需登录；visitorId 本地生成）----
+  app.post(
+    '/notes/:id/like',
+    { ...likeRateLimit, onRequest: [optionalAuth] },
+    async (req) => {
+      const { id } = parseParams(idParam, req);
+      const { visitorId } = parseBody(likeRequestSchema, req);
+      return noteService.toggleLike(id, visitorId);
+    },
+  );
+
+  // 查询当前访客对某笔记的点赞状态（供详情页按钮展示）
+  app.get('/notes/:id/like', { onRequest: [optionalAuth] }, async (req) => {
+    const { id } = parseParams(idParam, req);
+    const visitorId = (req.query as { visitorId?: string }).visitorId;
+    if (!visitorId) return { liked: false };
+    return { liked: await noteService.hasLiked(id, visitorId) };
+  });
 
   // ---- 管理接口（requireAdmin 是唯一安全边界）----
   app.get('/admin/notes', { onRequest: [requireAdmin] }, async (req) => {

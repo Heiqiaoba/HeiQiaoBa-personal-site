@@ -3,7 +3,8 @@
  * 代码复制、上一篇/下一篇。仅已发布笔记对访客可见。
  */
 import { useI18n } from '@/i18n';
-import { useNote, useNotes } from '@/api/notes';
+import { useLikeStatus, useNote, useNotes, useToggleLike } from '@/api/notes';
+import { track } from '@/lib/telemetry';
 import { useIsAdmin } from '@/lib/useIsAdmin';
 import { ReadingProgress } from '@/components/ReadingProgress';
 import { MarkdownView } from '@/components/MarkdownView';
@@ -11,7 +12,7 @@ import { Comments } from '@/components/Comments';
 import { useDocumentMeta } from '@/lib/useDocumentMeta';
 import GithubSlugger from 'github-slugger';
 import { Button, Spin, Tag, Typography } from 'antd';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 const { Title, Paragraph } = Typography;
@@ -42,6 +43,30 @@ export function NoteDetail() {
   const isAdmin = useIsAdmin();
   const { data: note, isLoading, isError } = useNote(slug);
   const { data: allNotes } = useNotes({ page: 1, pageSize: 100 });
+  const { data: likeStatus } = useLikeStatus(note?.id);
+  const toggleLike = useToggleLike(note?.id ?? '');
+  const [liked, setLiked] = useState(false);
+
+  useEffect(() => {
+    setLiked(likeStatus?.liked ?? false);
+  }, [likeStatus?.liked]);
+
+  // 详情页埋点：记录 note_view（用户无感，userId 由后端从会话补全）
+  useEffect(() => {
+    if (note) track('note_view', { slug: note.slug, noteId: note.id });
+  }, [note?.id]);
+
+  const onLike = async () => {
+    if (!note || toggleLike.isPending) return;
+    const next = !liked;
+    setLiked(next); // 乐观更新
+    try {
+      const res = await toggleLike.mutateAsync();
+      setLiked(res.liked);
+    } catch {
+      setLiked(!next); // 失败回滚
+    }
+  };
 
   // TOC 从 Markdown 标题生成；rehype-slug 会自动给渲染后的标题加同样的 id
   const toc = useMemo(() => (note ? buildToc(note.content) : []), [note]);
@@ -104,6 +129,15 @@ export function NoteDetail() {
             <span className="text-sm text-[color:var(--text-secondary)]">
               {note.viewCount} {t('notes.views')}
             </span>
+            <Button
+              size="small"
+              type={liked ? 'primary' : 'default'}
+              onClick={onLike}
+              disabled={toggleLike.isPending}
+              className="!ml-1"
+            >
+              {liked ? '♥ ' : '♡ '}{note.likeCount} {t('notes.likes')}
+            </Button>
           </div>
           {note.summary && (
             <Paragraph type="secondary" className="!border-l-[3px] !border-[color:var(--brand)] !pl-4 !text-base">

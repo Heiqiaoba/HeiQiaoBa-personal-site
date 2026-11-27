@@ -56,12 +56,26 @@ export const noteSchema = z.object({
   content: z.string(),
   status: noteStatusSchema,
   viewCount: z.number().int().default(0),
+  likeCount: z.number().int().default(0),
   tags: z.array(z.string()),
   publishedAt: z.string().datetime().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
 export type Note = z.infer<typeof noteSchema>;
+
+/** 点赞请求体：visitorId 为访客本地生成的稳定标识（无需登录） */
+export const likeRequestSchema = z.object({
+  visitorId: z.string().min(1).max(100),
+});
+export type LikeRequest = z.infer<typeof likeRequestSchema>;
+
+/** 点赞响应：当前是否已赞 + 最新点赞数 */
+export const likeResponseSchema = z.object({
+  liked: z.boolean(),
+  likeCount: z.number().int(),
+});
+export type LikeResponse = z.infer<typeof likeResponseSchema>;
 
 /** 新建笔记输入 */
 export const createNoteSchema = z.object({
