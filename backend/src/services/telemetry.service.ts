@@ -42,14 +42,17 @@ export async function getDashboard(query: TelemetryQuery) {
     .orderBy(desc(count()));
 
   // 按天聚合
+  // SELECT 与 GROUP BY 必须用同一表达式，否则 Postgres 会拒绝（created_at 未出现在 GROUP BY）。
+  // 先 date_trunc 到天，再 to_char 格式化，两者共享 date_trunc 表达式。
+  const dayExpr = sql`date_trunc('day', ${schema.telemetryEvents.createdAt} at time zone 'UTC')`;
   const dailyRows = await db
     .select({
-      date: sql<string>`to_char(${schema.telemetryEvents.createdAt} at time zone 'UTC', 'YYYY-MM-DD')`,
+      date: sql<string>`to_char(${dayExpr}, 'YYYY-MM-DD')`,
       count: count(),
     })
     .from(schema.telemetryEvents)
     .where(where)
-    .groupBy(sql`date_trunc('day', ${schema.telemetryEvents.createdAt} at time zone 'UTC')`)
+    .groupBy(dayExpr)
     .orderBy(sql`1`);
 
   // 热门页面（仅 page_view）
