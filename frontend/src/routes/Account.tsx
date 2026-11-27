@@ -4,8 +4,7 @@
  * 复用后端 Better Auth 的 /api/auth/change-password 端点。
  */
 import { useI18n } from '@/i18n';
-import { api } from '@/api/client';
-import { signOutAndClear, useSession } from '@/lib/auth-client';
+import { authClient, signOutAndClear, useSession } from '@/lib/auth-client';
 import { useMyPermissions } from '@/lib/permissions';
 import { Button, Card, Descriptions, Form, Input, Tag, Typography, message } from 'antd';
 import { useState } from 'react';
@@ -29,11 +28,16 @@ export function Account() {
     }
     setLoading(true);
     try {
-      // Better Auth 原生端点：/api/auth/change-password（经同源代理到后端）
-      await api.post('/auth/change-password', {
+      // 用 authClient 调用 Better Auth 原生端点（自动走 /api/auth、带同源 cookie 与 Origin）。
+      // 之前用 api.post('/auth/change-password') 会打到 /api/v1/... → 404。
+      const result = await authClient.changePassword({
         currentPassword: values.currentPassword,
         newPassword: values.newPassword,
       });
+      if (result.error) {
+        message.error(result.error.message ?? t('settings.failed'));
+        return;
+      }
       message.success(t('settings.success'));
       await signOutAndClear();
       navigate('/login', { replace: true });
