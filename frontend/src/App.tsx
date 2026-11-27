@@ -22,6 +22,7 @@ import { DeskOverview } from '@/routes/admin/DeskOverview';
 import { NoteEditor } from '@/routes/admin/NoteEditor';
 import { Settings } from '@/routes/admin/Settings';
 import { Images } from '@/routes/admin/Images';
+import { Analytics } from '@/routes/admin/Analytics';
 import { ConfigProvider, Layout } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import { Route, Routes, useLocation } from 'react-router-dom';
@@ -51,6 +52,7 @@ export function App() {
             <Route path="/write/articles" element={<AdminGuard><DeskLayout><AdminNotes key="articles" /></DeskLayout></AdminGuard>} />
             <Route path="/write/drafts" element={<AdminGuard><DeskLayout><AdminNotes key="drafts" mode="drafts" /></DeskLayout></AdminGuard>} />
             <Route path="/write/images" element={<AdminGuard><DeskLayout><Images /></DeskLayout></AdminGuard>} />
+            <Route path="/write/analytics" element={<AdminGuard><DeskLayout><Analytics /></DeskLayout></AdminGuard>} />
             <Route path="/write/settings" element={<AdminGuard><DeskLayout><Settings /></DeskLayout></AdminGuard>} />
             <Route path="/write/new" element={<AdminGuard><NoteEditor /></AdminGuard>} />
             <Route path="/write/:id" element={<AdminGuard><NoteEditor /></AdminGuard>} />

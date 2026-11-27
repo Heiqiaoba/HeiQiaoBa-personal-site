@@ -4,7 +4,7 @@
  * 包含笔记相关的三张表（notes / tags / note_tags）与 Better Auth 认证表。
  * 新增表后执行 pnpm db:generate 生成迁移。
  */
-import { index, integer, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { index, integer, jsonb, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import * as auth from './auth-schema.js';
 
 /** 笔记正文表 */
@@ -65,6 +65,27 @@ export const likes = pgTable(
   (table) => [
     uniqueIndex('likes_note_user_unique').on(table.noteId, table.userId),
     index('likes_note_idx').on(table.noteId),
+  ],
+);
+
+/**
+ * 埋点事件表：看板的数据源。
+ * 只存脱敏后的字段（路径不含 query、标量 props），登录用户的 userId 由后端补全。
+ */
+export const telemetryEvents = pgTable(
+  'telemetry_events',
+  {
+    id: text('id').primaryKey(),
+    type: text('type').notNull(),
+    path: text('path').notNull(),
+    sessionId: text('session_id').notNull(),
+    userId: text('user_id'),
+    props: jsonb('props').$type<Record<string, string | number | boolean | null>>(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index('telemetry_type_idx').on(table.type),
+    index('telemetry_created_idx').on(table.createdAt),
   ],
 );
 

@@ -3,12 +3,13 @@
  *
  * 依赖 config/env（区分环境）与 config/logger，消费 contract 的
  * TelemetryEvent 类型，由 routes/telemetry 调用。采用可插拔设计：
- * 当前实现写结构化日志，接数仓时只需替换 write 内部实现（批写 Kafka/ClickHouse/
- * 时序库），路由层与事件格式都无需改动。
+ * 当前实现同时写数据库（看板数据源）与结构化日志；未来接外部数仓时只需
+ * 在 write 内追加出口，路由层与事件格式都无需改动。
  */
 import type { TelemetryEvent } from '../contract.js';
 import { env } from '../config/env.js';
 import { logger } from '../config/logger.js';
+import { db, schema } from '../db/index.js';
 
 /**
  * 写入一批埋点事件。
@@ -35,6 +36,24 @@ export async function writeTelemetry(events: TelemetryEvent[]) {
     },
     'telemetry batch received',
   );
+
+  // 落库：看板的数据源。单条失败不影响整批（批量插入本身是原子的）。
+  await db
+    .insert(schema.telemetryEvents)
+    .values(
+      events.map((e) => ({
+        id: crypto.randomUUID(),
+        type: e.type,
+        path: e.path,
+        sessionId: e.sessionId,
+        userId: e.userId ?? null,
+        props: e.props ?? null,
+        createdAt: new Date(e.timestamp),
+      })),
+    )
+    .catch((err) => {
+      logger.error({ err }, 'failed to persist telemetry events');
+    });
 
   // 预留：await warehouse.insert(events)
 }

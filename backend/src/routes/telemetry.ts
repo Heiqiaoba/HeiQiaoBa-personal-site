@@ -10,11 +10,12 @@
  * - 路由配置 200/min 的独立限流（高于全局 100/min），既防刷又不误伤正常上报；
  * - 立即返回 202 Accepted，落地耗时不阻塞客户端。
  */
-import { telemetryBatchSchema } from '../contract.js';
+import { telemetryBatchSchema, telemetryQuerySchema } from '../contract.js';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { resolveSession } from '../lib/context.js';
+import { requireAdmin, resolveSession } from '../lib/context.js';
 import { writeTelemetry } from '../lib/telemetry-sink.js';
-import { parseBody } from '../middleware/validation.js';
+import { parseBody, parseQuery } from '../middleware/validation.js';
+import { getDashboard } from '../services/telemetry.service.js';
 
 /** 注册埋点接收端点 */
 export async function telemetryRoutes(app: FastifyInstance) {
@@ -34,6 +35,16 @@ export async function telemetryRoutes(app: FastifyInstance) {
       }));
       await writeTelemetry(enriched);
       return reply.status(202).send({ accepted: enriched.length });
+    },
+  );
+
+  // 看板数据：仅管理员可访问
+  app.get(
+    '/telemetry/dashboard',
+    { onRequest: [requireAdmin], schema: { tags: ['telemetry'], summary: '埋点看板数据' } },
+    async (req) => {
+      const query = parseQuery(telemetryQuerySchema, req);
+      return getDashboard(query);
     },
   );
 }

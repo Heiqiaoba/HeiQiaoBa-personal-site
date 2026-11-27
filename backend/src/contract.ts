@@ -114,3 +114,14 @@ export const noteListQuerySchema = z.object({
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
 export type NoteListQuery = z.infer<typeof noteListQuerySchema>;
+
+// ============================================================
+// 埋点看板（Telemetry Dashboard）契约
+// ============================================================
+
+/** 看板查询参数：时间范围（天）与最近事件条数 */
+export const telemetryQuerySchema = z.object({
+  days: z.coerce.number().int().min(1).max(90).default(7),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+});
+export type TelemetryQuery = z.infer<typeof telemetryQuerySchema>;

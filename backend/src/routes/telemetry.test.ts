@@ -32,6 +32,16 @@ describe('telemetry ingest', () => {
     await app.close();
   });
 
+  it('dashboard requires admin (unauthenticated gets 401)', async () => {
+    const app = await buildApp();
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/v1/telemetry/dashboard',
+    });
+    expect(res.statusCode).toBe(401);
+    await app.close();
+  });
+
   it('rejects malformed events with 400', async () => {
     const app = await buildApp();
     const res = await app.inject({
