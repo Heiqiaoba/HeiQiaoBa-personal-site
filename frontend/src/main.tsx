@@ -20,6 +20,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { App } from './App';
 import { ApiAuthSync } from './components/ApiAuthSync';
+import { BackendWakeMonitor } from './components/BackendWakeMonitor';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { TelemetryBootstrap } from './components/TelemetryBootstrap';
 import 'highlight.js/styles/github-dark.css';
@@ -45,6 +46,7 @@ function Root() {
               <BrowserRouter>
                 <TelemetryBootstrap />
                 <ApiAuthSync />
+                <BackendWakeMonitor />
                 <App />
               </BrowserRouter>
             </QueryClientProvider>

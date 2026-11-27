@@ -5,13 +5,12 @@
 import { useI18n } from '@/i18n';
 import { useNotes } from '@/api/notes';
 import { useIsAdmin } from '@/lib/useIsAdmin';
-import { api } from '@/api/client';
+import { useSyncExternalStore } from 'react';
+import { backendWake } from '@/lib/backendWake';
 import { Button, Tag, Typography } from 'antd';
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const { Title, Paragraph, Text } = Typography;
-type HealthState = 'loading' | 'ok' | 'error';
 
 const cards = [
   { titleKey: 'home.section.notes', descKey: 'home.section.notes.desc', to: '/notes', tone: 'from-amber-50 to-orange-50' },
@@ -22,16 +21,18 @@ const cards = [
 export function Home() {
   const { t } = useI18n();
   const isAdmin = useIsAdmin();
-  const [health, setHealth] = useState<HealthState>('loading');
+  // 站点状态直接订阅全局唤醒状态：正常时静默显示已连接，唤醒中/失败时显示相应文案
+  const wakeState = useSyncExternalStore(backendWake.subscribe, backendWake.getState, backendWake.getState);
   const { data: notes } = useNotes({ page: 1, pageSize: 6 });
 
-  useEffect(() => {
-    let active = true;
-    api.get<{ status: string }>('/health')
-      .then(() => { if (active) setHealth('ok'); })
-      .catch(() => { if (active) setHealth('error'); });
-    return () => { active = false; };
-  }, []);
+  const healthText =
+    wakeState === 'ok'
+      ? t('home.health.ok')
+      : wakeState === 'waking' || wakeState === 'checking'
+        ? t('wake.waking.title')
+        : wakeState === 'failed'
+          ? t('home.health.error')
+          : t('home.health.loading');
 
   return (
     <div className="bg-[color:var(--bg)]">
@@ -110,7 +111,7 @@ export function Home() {
 
         {/* 站点状态 */}
         <footer className="mt-14 border-t border-[color:var(--border)] pt-6 text-sm text-[color:var(--text-muted)]">
-          {t('home.health.title')}: {health === 'loading' ? t('home.health.loading') : health === 'ok' ? t('home.health.ok') : t('home.health.error')}
+          {t('home.health.title')}: {healthText}
         </footer>
       </div>
     </div>

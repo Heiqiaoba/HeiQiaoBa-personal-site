@@ -11,6 +11,7 @@
  * 直接复用；业务层只面对泛型 api 方法与 ApiError，不接触 axios 细节。
  */
 import { telemetry } from '@/lib/telemetry';
+import { backendWake } from '@/lib/backendWake';
 import axios, {
   type AxiosError,
   type AxiosInstance,
@@ -106,6 +107,9 @@ instance.interceptors.response.use(
     if (err.response) {
       const { status, data, headers } = err.response;
       const body = data ?? {};
+      // 5xx（典型如 Render 冷启动时的 502）→ 触发后端唤醒流程；
+      // 401/403/404/校验错误等业务错误不触发，避免误判。
+      if (status >= 500) backendWake.notifyApiFailure();
       const error = new ApiError({
         status,
         code: body.error?.code ?? 'HTTP_ERROR',
@@ -129,6 +133,7 @@ instance.interceptors.response.use(
     // 网络错误 / 超时 / 取消：同样打埋点（否则断网/CORS 场景会成为可观测性盲区）
     const path = ((err.config?.url ?? '').split('?')[0] ?? '').slice(0, 200);
     if (err.code === 'ECONNABORTED' || err.code === 'ETIMEDOUT') {
+      backendWake.notifyApiFailure();
       telemetry.track('api_error', {
         code: 'TIMEOUT',
         method: (err.config?.method ?? 'unknown').toUpperCase(),
@@ -140,6 +145,7 @@ instance.interceptors.response.use(
       // 主动取消（如乐观更新前的 cancelQueries）是正常流程，不打点避免噪音
       return Promise.reject(new ApiError({ code: 'CANCELLED', message: '请求已取消' }));
     }
+    backendWake.notifyApiFailure();
     telemetry.track('api_error', {
       code: 'NETWORK',
       method: (err.config?.method ?? 'unknown').toUpperCase(),
