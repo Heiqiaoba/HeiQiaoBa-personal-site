@@ -11,12 +11,15 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import pg from 'pg';
 import { env } from '../config/env.js';
+import { seedRbac } from '../services/rbac.service.js';
 
 /** 建立临时连接池、应用迁移并关闭连接；失败时由入口 catch 以非零码退出 */
 async function main() {
   const pool = new pg.Pool({ connectionString: env.DATABASE_URL });
   const db = drizzle(pool);
   await migrate(db, { migrationsFolder: './drizzle' });
+  // RBAC 种子数据（权限列表 + guest/admin 内置角色）幂等写入，迁移后立即可用。
+  await seedRbac();
   await pool.end();
   console.log('Migrations applied.');
 }

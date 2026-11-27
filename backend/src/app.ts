@@ -27,6 +27,7 @@ import { healthRoutes } from './routes/health.js';
 import { noteRoutes } from './routes/notes.js';
 import { telemetryRoutes } from './routes/telemetry.js';
 import { uploadRoutes } from './routes/upload.js';
+import { rbacRoutes } from './routes/rbac.js';
 import { UPLOAD_DIR } from './lib/storage.js';
 
 /**
@@ -169,6 +170,7 @@ export async function buildApp() {
       await telemetryRoutes(api);
       await noteRoutes(api);
       await uploadRoutes(api);
+      await rbacRoutes(api);
     },
     { prefix: '/api/v1' },
   );

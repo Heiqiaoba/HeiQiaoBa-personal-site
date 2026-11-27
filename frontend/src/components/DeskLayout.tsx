@@ -6,19 +6,28 @@ import { useI18n } from '@/i18n';
 import { Button } from 'antd';
 import { Link, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
+import { usePermissions } from '@/lib/permissions';
 
-const NAV = [
-  { to: '/write', key: 'desk.nav.overview', icon: '◫', end: true },
-  { to: '/write/articles', key: 'desk.nav.articles', icon: '▤', end: false },
-  { to: '/write/drafts', key: 'desk.nav.drafts', icon: '◱', end: false },
-  { to: '/write/images', key: 'images.title', icon: '▧', end: false },
-  { to: '/write/analytics', key: 'desk.nav.analytics', icon: '◈', end: false },
-  { to: '/write/settings', key: 'settings.title', icon: '⚙', end: false },
-] as const;
+/** 侧边栏项的 i18n key 类型 */
+type NavKey = Parameters<ReturnType<typeof useI18n>['t']>[0];
+
+/** 侧边栏项：perm 为 null 表示所有能进写作台的人可见 */
+const NAV: ReadonlyArray<{ to: string; key: NavKey; icon: string; end: boolean; perm: string | null }> = [
+  { to: '/write', key: 'desk.nav.overview', icon: '◫', end: true, perm: null },
+  { to: '/write/articles', key: 'desk.nav.articles', icon: '▤', end: false, perm: 'note:read' },
+  { to: '/write/drafts', key: 'desk.nav.drafts', icon: '◱', end: false, perm: 'note:read' },
+  { to: '/write/images', key: 'images.title', icon: '▧', end: false, perm: 'image:read' },
+  { to: '/write/analytics', key: 'desk.nav.analytics', icon: '◈', end: false, perm: 'analytics:read' },
+  { to: '/write/users', key: 'users.title', icon: '♙', end: false, perm: 'user:read' },
+  { to: '/write/roles', key: 'roles.title', icon: '◈', end: false, perm: 'role:read' },
+  { to: '/write/permissions', key: 'perms.title', icon: '⚑', end: false, perm: 'permission:read' },
+  { to: '/write/settings', key: 'settings.title', icon: '⚙', end: false, perm: null },
+];
 
 export function DeskLayout({ children }: { children: ReactNode }) {
   const { t, lang, setLang } = useI18n();
   const { pathname } = useLocation();
+  const { has } = usePermissions();
 
   return (
     <div className="desk-layout">
@@ -28,7 +37,7 @@ export function DeskLayout({ children }: { children: ReactNode }) {
           <span className="text-base font-semibold text-gray-800">{t('nav.write')}</span>
         </div>
         <nav className="flex flex-col gap-1">
-          {NAV.map((item) => {
+          {NAV.filter((item) => item.perm === null || has(item.perm)).map((item) => {
             const active = item.end ? pathname === item.to : pathname.startsWith(item.to);
             return (
               <Link

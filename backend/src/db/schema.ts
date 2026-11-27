@@ -69,6 +69,41 @@ export const likes = pgTable(
 );
 
 /**
+ * RBAC：权限（按钮级）。code 形如 `note:create`、`user:read`。
+ */
+export const permissions = pgTable('permissions', {
+  id: text('id').primaryKey(),
+  code: text('code').notNull().unique(),
+  name: text('name').notNull(),
+  description: text('description').notNull().default(''),
+  group: text('group').notNull().default('general'),
+});
+
+/** RBAC：角色。system=true 的内置角色不可删除。 */
+export const roles = pgTable('roles', {
+  id: text('id').primaryKey(),
+  code: text('code').notNull().unique(),
+  name: text('name').notNull(),
+  description: text('description').notNull().default(''),
+  system: integer('system').notNull().default(0),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** RBAC：角色-权限关联（多对多） */
+export const rolePermissions = pgTable(
+  'role_permissions',
+  {
+    roleId: text('role_id')
+      .notNull()
+      .references(() => roles.id, { onDelete: 'cascade' }),
+    permissionId: text('permission_id')
+      .notNull()
+      .references(() => permissions.id, { onDelete: 'cascade' }),
+  },
+  (table) => [uniqueIndex('role_permissions_unique').on(table.roleId, table.permissionId)],
+);
+
+/**
  * 埋点事件表：看板的数据源。
  * 只存脱敏后的字段（路径不含 query、标量 props），登录用户的 userId 由后端补全。
  */

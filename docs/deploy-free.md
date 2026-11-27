@@ -117,6 +117,15 @@ DATABASE_URL='<Neon连接串>' node dist/db/create-admin.js <email> <name> '<pas
 
 > 看板在写作台侧边栏「埋点看板」入口。埋点只记录脱敏路径（无 query）与标量 props，登录时由后端补全 userId。
 
+### RBAC 权限体系
+
+- **角色**：内置 `admin`（全部权限）与 `guest`（无任何管理权限，新注册用户默认此角色）；可在后台新建自定义角色
+- **权限**：按钮/接口级，共 15 个（`note:create`、`user:role`、`analytics:read` 等），后端代码 `ALL_PERMISSIONS` 是权威定义
+- **校验公共方法**：后端 `requirePermission(code)` 守卫（[`lib/context.ts`](../backend/src/lib/context.ts)）+ `hasPermission(userId, code)`（[`services/rbac.service.ts`](../backend/src/services/rbac.service.ts)）；前端 `usePermissions()/Can/can()`（[`lib/permissions.tsx`](../frontend/src/lib/permissions.tsx)）
+- **管理界面**：写作台 → 用户管理 / 角色管理 / 权限管理（各按钮按权限显隐；内置角色不可改删）
+- **账户设置**：顶部导航「账户设置」（所有登录用户可见，可改密码）；旧 `/write/settings` 已指向同一页面
+- 迁移 `0005` 自动建 `permissions`/`roles`/`role_permissions` 表，种子数据由 `migrate.ts` 幂等写入
+
 ### 冷启动无感提示（前端）
 
 针对 Render 免费层休眠唤醒，前端内置了全局监测（`src/lib/backendWake.ts` + `components/BackendWakeMonitor.tsx`）：

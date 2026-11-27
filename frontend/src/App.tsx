@@ -5,8 +5,9 @@
  * 写作台（/write/*）有独立侧边栏布局，编辑器为全屏，均不显示公共 Header/Footer。
  * 真正的安全边界在后端 requireAdmin；前端 AdminGuard 只负责体验层。
  */
-import { AdminGuard } from '@/components/AdminGuard';
+import { AdminGuard, PermissionGuard } from '@/components/AdminGuard';
 import { AppHeader } from '@/components/AppHeader';
+import { AuthGuard } from '@/components/AuthGuard';
 import { DeskLayout } from '@/components/DeskLayout';
 import { useI18n } from '@/i18n';
 import { Home } from '@/routes/Home';
@@ -20,9 +21,12 @@ import { Projects } from '@/routes/Projects';
 import { AdminNotes } from '@/routes/admin/AdminNotes';
 import { DeskOverview } from '@/routes/admin/DeskOverview';
 import { NoteEditor } from '@/routes/admin/NoteEditor';
-import { Settings } from '@/routes/admin/Settings';
 import { Images } from '@/routes/admin/Images';
 import { Analytics } from '@/routes/admin/Analytics';
+import { Users } from '@/routes/admin/Users';
+import { Roles } from '@/routes/admin/Roles';
+import { Permissions } from '@/routes/admin/Permissions';
+import { Account } from '@/routes/Account';
 import { ConfigProvider, Layout } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import { Route, Routes, useLocation } from 'react-router-dom';
@@ -48,12 +52,16 @@ export function App() {
             <Route path="/projects" element={<Projects />} />
             <Route path="/about" element={<About />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/account" element={<AuthGuard><Account /></AuthGuard>} />
             <Route path="/write" element={<AdminGuard><DeskLayout><DeskOverview /></DeskLayout></AdminGuard>} />
             <Route path="/write/articles" element={<AdminGuard><DeskLayout><AdminNotes key="articles" /></DeskLayout></AdminGuard>} />
             <Route path="/write/drafts" element={<AdminGuard><DeskLayout><AdminNotes key="drafts" mode="drafts" /></DeskLayout></AdminGuard>} />
             <Route path="/write/images" element={<AdminGuard><DeskLayout><Images /></DeskLayout></AdminGuard>} />
-            <Route path="/write/analytics" element={<AdminGuard><DeskLayout><Analytics /></DeskLayout></AdminGuard>} />
-            <Route path="/write/settings" element={<AdminGuard><DeskLayout><Settings /></DeskLayout></AdminGuard>} />
+            <Route path="/write/analytics" element={<AdminGuard><PermissionGuard perm="analytics:read"><DeskLayout><Analytics /></DeskLayout></PermissionGuard></AdminGuard>} />
+            <Route path="/write/users" element={<AdminGuard><PermissionGuard perm="user:read"><DeskLayout><Users /></DeskLayout></PermissionGuard></AdminGuard>} />
+            <Route path="/write/roles" element={<AdminGuard><PermissionGuard perm="role:read"><DeskLayout><Roles /></DeskLayout></PermissionGuard></AdminGuard>} />
+            <Route path="/write/permissions" element={<AdminGuard><PermissionGuard perm="permission:read"><DeskLayout><Permissions /></DeskLayout></PermissionGuard></AdminGuard>} />
+            <Route path="/write/settings" element={<AdminGuard><DeskLayout><Account /></DeskLayout></AdminGuard>} />
             <Route path="/write/new" element={<AdminGuard><NoteEditor /></AdminGuard>} />
             <Route path="/write/:id" element={<AdminGuard><NoteEditor /></AdminGuard>} />
             <Route path="*" element={<NotFound />} />

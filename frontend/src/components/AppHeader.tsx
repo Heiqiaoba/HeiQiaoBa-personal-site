@@ -4,7 +4,7 @@
  */
 import { useI18n } from '@/i18n';
 import { signOutAndClear, useSession } from '@/lib/auth-client';
-import { useIsAdmin } from '@/lib/useIsAdmin';
+import { usePermissions } from '@/lib/permissions';
 import { useTheme } from '@/theme';
 import { LogoutOutlined } from '@ant-design/icons';
 import { Button, Layout, Space, Typography } from 'antd';
@@ -15,7 +15,8 @@ const { Title, Text } = Typography;
 
 export function AppHeader() {
   const { data: session } = useSession();
-  const isAdmin = useIsAdmin();
+  const { hasAny } = usePermissions();
+  const canEnterDesk = hasAny('note:read', 'note:create', 'image:read', 'analytics:read', 'user:read', 'role:read', 'permission:read');
   const { mode, toggle } = useTheme();
   const { t, lang, setLang } = useI18n();
   return (
@@ -52,11 +53,14 @@ export function AppHeader() {
         </Button>
         {session ? (
           <>
-            {isAdmin && (
+            {canEnterDesk && (
               <Link to="/write">
                 <Button type="link" size="small">{t('nav.write')}</Button>
               </Link>
             )}
+            <Link to="/account">
+              <Button type="link" size="small">{t('nav.account')}</Button>
+            </Link>
             <Text type="secondary" className="!hidden sm:!inline">
               {session.user.email}
             </Text>

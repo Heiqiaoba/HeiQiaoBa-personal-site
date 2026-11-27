@@ -4,8 +4,8 @@
  */
 import { useI18n } from '@/i18n';
 import { useLikeStatus, useNote, useNotes, useToggleLike } from '@/api/notes';
+import { Can } from '@/lib/permissions';
 import { track } from '@/lib/telemetry';
-import { useIsAdmin } from '@/lib/useIsAdmin';
 import { ReadingProgress } from '@/components/ReadingProgress';
 import { MarkdownView } from '@/components/MarkdownView';
 import { Comments } from '@/components/Comments';
@@ -40,7 +40,6 @@ function buildToc(markdown: string): TocItem[] {
 export function NoteDetail() {
   const { slug = '' } = useParams();
   const { t } = useI18n();
-  const isAdmin = useIsAdmin();
   const { data: note, isLoading, isError } = useNote(slug);
   const { data: allNotes } = useNotes({ page: 1, pageSize: 100 });
   const { data: likeStatus } = useLikeStatus(note?.id);
@@ -112,11 +111,11 @@ export function NoteDetail() {
         <article className="min-w-0 flex-1">
           <div className="mb-4 flex items-center justify-between gap-3">
             <Link to="/notes"><Button type="link" className="!px-0">{t('notes.back')}</Button></Link>
-            {isAdmin && (
+            <Can perm="note:update">
               <Link to={`/write/${note.id}`}>
                 <Button type="link" size="small" className="!px-0">{t('notes.edit')}</Button>
               </Link>
-            )}
+            </Can>
           </div>
           <Title level={1} className="!mb-3 !text-[2.2rem] !leading-tight">{note.title}</Title>
           <div className="mb-6 flex flex-wrap items-center gap-2">

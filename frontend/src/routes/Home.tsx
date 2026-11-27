@@ -4,7 +4,7 @@
  */
 import { useI18n } from '@/i18n';
 import { useNotes } from '@/api/notes';
-import { useIsAdmin } from '@/lib/useIsAdmin';
+import { Can } from '@/lib/permissions';
 import { useSyncExternalStore } from 'react';
 import { backendWake } from '@/lib/backendWake';
 import { Button, Tag, Typography } from 'antd';
@@ -20,7 +20,6 @@ const cards = [
 
 export function Home() {
   const { t } = useI18n();
-  const isAdmin = useIsAdmin();
   // 站点状态直接订阅全局唤醒状态：正常时静默显示已连接，唤醒中/失败时显示相应文案
   const wakeState = useSyncExternalStore(backendWake.subscribe, backendWake.getState, backendWake.getState);
   const { data: notes } = useNotes({ page: 1, pageSize: 6 });
@@ -73,11 +72,11 @@ export function Home() {
         <section className="mt-14">
           <div className="mb-6 flex items-center justify-between gap-3">
             <Title level={2} className="!m-0 !text-2xl">{t('home.section.notes')}</Title>
-            {isAdmin && (
+            <Can perm="note:create">
               <Link to="/write/new">
                 <Button type="link" size="small" className="!px-0">{t('home.newNote')}</Button>
               </Link>
-            )}
+            </Can>
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {notes?.items.map((note, i) => (

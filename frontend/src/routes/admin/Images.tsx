@@ -2,6 +2,7 @@
  * 图片管理页：列出所有已上传图片，支持预览、复制链接、删除。
  */
 import { useI18n } from '@/i18n';
+import { usePermissions } from '@/lib/permissions';
 import { useDeleteImage, useImages } from '@/api/notes';
 import { Button, Empty, Popconfirm, Typography, message } from 'antd';
 import { useState } from 'react';
@@ -10,6 +11,7 @@ const { Title, Paragraph, Text } = Typography;
 
 export function Images() {
   const { t } = useI18n();
+  const { has } = usePermissions();
   const { data, isLoading } = useImages();
   const del = useDeleteImage();
   const [copied, setCopied] = useState<string | null>(null);
@@ -44,12 +46,14 @@ export function Images() {
               </Text>
               <div className="mt-2 flex gap-2">
                 <Button size="small" onClick={() => copy(img.url)}>{copied === img.url ? '✓' : 'URL'}</Button>
-                <Popconfirm
-                  title={t('images.deleteConfirm')}
-                  onConfirm={() => del.mutate(img.name, { onSuccess: () => message.success(t('admin.saved')) })}
-                >
-                  <Button size="small" danger>{t('admin.delete')}</Button>
-                </Popconfirm>
+                {has('image:delete') && (
+                  <Popconfirm
+                    title={t('images.deleteConfirm')}
+                    onConfirm={() => del.mutate(img.name, { onSuccess: () => message.success(t('admin.saved')) })}
+                  >
+                    <Button size="small" danger>{t('admin.delete')}</Button>
+                  </Popconfirm>
+                )}
               </div>
             </div>
           </div>

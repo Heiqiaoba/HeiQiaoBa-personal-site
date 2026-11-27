@@ -14,6 +14,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { auth } from './auth.js';
 import { Errors } from './errors.js';
+import { hasPermission } from '../services/rbac.service.js';
 
 /**
  * 鉴权上下文：路由处理器唯一应消费的用户身份信息。
@@ -22,7 +23,7 @@ import { Errors } from './errors.js';
 export type AuthContext = {
   userId: string;
   sessionId: string;
-  role: 'admin' | 'user';
+  role: 'admin' | 'guest' | 'user';
 };
 
 declare module 'fastify' {
@@ -56,7 +57,7 @@ export async function resolveSession(req: FastifyRequest): Promise<AuthContext |
     return {
       userId: user.id,
       sessionId: result.session.id,
-      role: user.role === 'admin' ? 'admin' : 'user',
+      role: user.role === 'admin' ? 'admin' : user.role === 'guest' ? 'guest' : 'user',
     };
   } catch (err) {
     if (err instanceof Error && 'statusCode' in err) throw err;
@@ -89,6 +90,20 @@ export async function requireAuth(req: FastifyRequest, _reply: FastifyReply) {
 export async function requireAdmin(req: FastifyRequest, _reply: FastifyReply) {
   await requireAuth(req, _reply);
   if (req.auth?.role !== 'admin') throw Errors.forbidden('Admin access required');
+}
+
+/**
+ * 通用权限守卫工厂：返回可用于 onRequest 的钩子。
+ * 先要求登录，再用公共 hasPermission 判定 RBAC 权限码。
+ * 所有管理接口都应迁到这个守卫，新增权限点无需再改守卫代码。
+ */
+export function requirePermission(code: string) {
+  return async (req: FastifyRequest, _reply: FastifyReply) => {
+    await requireAuth(req, _reply);
+    if (!(await hasPermission(req.auth?.userId, code))) {
+      throw Errors.forbidden(`Permission required: ${code}`);
+    }
+  };
 }
 
 /**

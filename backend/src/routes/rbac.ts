@@ -1,0 +1,176 @@
+/**
+ * RBAC 管理路由（挂在 /api/v1）：
+ * - GET  /me/permissions        当前用户角色与权限码（登录用户可读）
+ * - GET  /admin/users           用户列表（user:read）
+ * - PATCH /admin/users/:id/role 分配角色（user:role）
+ * - PATCH /admin/users/:id/ban  封禁/解封（user:ban）
+ * - GET  /admin/roles           角色列表（role:read）
+ * - POST /admin/roles           新建角色（role:manage）
+ * - PATCH /admin/roles/:id      改角色名/描述（role:manage）
+ * - DELETE /admin/roles/:id     删除自定义角色（role:manage）
+ * - PUT  /admin/roles/:id/permissions  设置角色权限（role:manage）
+ * - GET  /admin/permissions     权限列表（permission:read）
+ */
+import type { FastifyInstance } from 'fastify';
+import { and, eq, inArray } from 'drizzle-orm';
+import { z } from 'zod';
+import { db, schema } from '../db/index.js';
+import { requireAuth, requirePermission } from '../lib/context.js';
+import { Errors } from '../lib/errors.js';
+import { parseBody, parseParams } from '../middleware/validation.js';
+import { ALL_PERMISSIONS, permissionsForUser } from '../services/rbac.service.js';
+
+const idParam = z.object({ id: z.string().min(1) });
+
+const roleCreateSchema = z.object({
+  code: z.string().min(1).max(50).regex(/^[a-z0-9_-]+$/, '角色 code 只能含小写字母、数字、下划线和连字符'),
+  name: z.string().min(1).max(50),
+  description: z.string().max(200).default(''),
+  permissionIds: z.array(z.string()).default([]),
+});
+const roleUpdateSchema = z.object({
+  name: z.string().min(1).max(50).optional(),
+  description: z.string().max(200).optional(),
+  permissionIds: z.array(z.string()).optional(),
+});
+const rolePermSchema = z.object({ permissionIds: z.array(z.string()) });
+const setRoleSchema = z.object({ role: z.string().min(1).max(50) });
+const banSchema = z.object({ banned: z.boolean(), reason: z.string().max(200).optional() });
+
+/** 角色 + 其权限 id 列表 */
+async function rolesWithPermissions() {
+  const roles = await db.select().from(schema.roles).orderBy(schema.roles.system, schema.roles.createdAt);
+  const links = await db.select().from(schema.rolePermissions);
+  return roles.map((r) => ({
+    id: r.id,
+    code: r.code,
+    name: r.name,
+    description: r.description,
+    system: r.system === 1,
+    permissionIds: links.filter((l) => l.roleId === r.id).map((l) => l.permissionId),
+  }));
+}
+
+export async function rbacRoutes(app: FastifyInstance) {
+  // 当前登录用户的角色与权限（前端按此控制按钮显示）
+  app.get('/me/permissions', { onRequest: [requireAuth] }, async (req) => {
+    return permissionsForUser(req.auth!.userId);
+  });
+
+  // ---- 用户管理 ----
+  app.get('/admin/users', { onRequest: [requirePermission('user:read')] }, async () => {
+    const users = await db
+      .select({
+        id: schema.users.id,
+        email: schema.users.email,
+        name: schema.users.name,
+        role: schema.users.role,
+        banned: schema.users.banned,
+        banReason: schema.users.banReason,
+        createdAt: schema.users.createdAt,
+      })
+      .from(schema.users)
+      .orderBy(schema.users.createdAt);
+    return users.map((u) => ({ ...u, createdAt: u.createdAt.toISOString() }));
+  });
+
+  app.patch('/admin/users/:id/role', { onRequest: [requirePermission('user:role')] }, async (req) => {
+    const { id } = parseParams(idParam, req);
+    const { role } = parseBody(setRoleSchema, req);
+    // 角色必须存在
+    const [target] = await db.select({ code: schema.roles.code }).from(schema.roles).where(eq(schema.roles.code, role)).limit(1);
+    if (!target) throw Errors.badRequest('Role not found');
+    await db.update(schema.users).set({ role }).where(eq(schema.users.id, id));
+    return { ok: true };
+  });
+
+  app.patch('/admin/users/:id/ban', { onRequest: [requirePermission('user:ban')] }, async (req) => {
+    const { id } = parseParams(idParam, req);
+    const { banned, reason } = parseBody(banSchema, req);
+    await db
+      .update(schema.users)
+      .set({ banned, banReason: banned ? (reason ?? null) : null })
+      .where(eq(schema.users.id, id));
+    return { ok: true };
+  });
+
+  // ---- 角色管理 ----
+  app.get('/admin/roles', { onRequest: [requirePermission('role:read')] }, async () => rolesWithPermissions());
+
+  app.post('/admin/roles', { onRequest: [requirePermission('role:manage')] }, async (req) => {
+    const input = parseBody(roleCreateSchema, req);
+    const [created] = await db
+      .insert(schema.roles)
+      .values({ id: crypto.randomUUID(), code: input.code, name: input.name, description: input.description, system: 0 })
+      .returning();
+    if (input.permissionIds.length) {
+      await db
+        .insert(schema.rolePermissions)
+        .values(input.permissionIds.map((permissionId) => ({ roleId: created!.id, permissionId })))
+        .onConflictDoNothing();
+    }
+    return { ok: true, id: created!.id };
+  });
+
+  app.patch('/admin/roles/:id', { onRequest: [requirePermission('role:manage')] }, async (req) => {
+    const { id } = parseParams(idParam, req);
+    const input = parseBody(roleUpdateSchema, req);
+    const [role] = await db.select().from(schema.roles).where(eq(schema.roles.id, id)).limit(1);
+    if (!role) throw Errors.notFound('Role not found');
+    if (role.system === 1) throw Errors.badRequest('Built-in roles cannot be modified');
+    if (input.name !== undefined || input.description !== undefined) {
+      await db
+        .update(schema.roles)
+        .set({
+          ...(input.name !== undefined ? { name: input.name } : {}),
+          ...(input.description !== undefined ? { description: input.description } : {}),
+        })
+        .where(eq(schema.roles.id, id));
+    }
+    if (input.permissionIds !== undefined) {
+      await db.delete(schema.rolePermissions).where(eq(schema.rolePermissions.roleId, id));
+      if (input.permissionIds.length) {
+        await db
+          .insert(schema.rolePermissions)
+          .values(input.permissionIds.map((permissionId) => ({ roleId: id, permissionId })))
+          .onConflictDoNothing();
+      }
+    }
+    return { ok: true };
+  });
+
+  app.delete('/admin/roles/:id', { onRequest: [requirePermission('role:manage')] }, async (req) => {
+    const { id } = parseParams(idParam, req);
+    const [role] = await db.select().from(schema.roles).where(eq(schema.roles.id, id)).limit(1);
+    if (!role) throw Errors.notFound('Role not found');
+    if (role.system === 1) throw Errors.badRequest('Built-in roles cannot be deleted');
+    // 还有用户使用该角色时禁止删除
+    const users = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.role, role.code)).limit(1);
+    if (users.length) throw Errors.badRequest('Role is still assigned to users');
+    await db.delete(schema.roles).where(eq(schema.roles.id, id));
+    return { ok: true };
+  });
+
+  app.put('/admin/roles/:id/permissions', { onRequest: [requirePermission('role:manage')] }, async (req) => {
+    const { id } = parseParams(idParam, req);
+    const { permissionIds } = parseBody(rolePermSchema, req);
+    const [role] = await db.select().from(schema.roles).where(eq(schema.roles.id, id)).limit(1);
+    if (!role) throw Errors.notFound('Role not found');
+    if (role.system === 1) throw Errors.badRequest('Built-in roles cannot be modified');
+    await db.delete(schema.rolePermissions).where(eq(schema.rolePermissions.roleId, id));
+    if (permissionIds.length) {
+      await db
+        .insert(schema.rolePermissions)
+        .values(permissionIds.map((permissionId) => ({ roleId: id, permissionId })))
+        .onConflictDoNothing();
+    }
+    return { ok: true };
+  });
+
+  // ---- 权限列表（只读，权限码由代码定义）----
+  app.get('/admin/permissions', { onRequest: [requirePermission('permission:read')] }, async () => {
+    const rows = await db.select().from(schema.permissions).orderBy(schema.permissions.group, schema.permissions.code);
+    // ALL_PERMISSIONS 作为权威定义，库里缺的补出来（seed 已处理，这里兜底）
+    return rows.length ? rows : ALL_PERMISSIONS;
+  });
+}

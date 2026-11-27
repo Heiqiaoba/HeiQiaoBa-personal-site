@@ -5,7 +5,7 @@
  */
 import type { FastifyInstance } from 'fastify';
 import { createNoteSchema, likeRequestSchema, noteListQuerySchema, updateNoteSchema } from '../contract.js';
-import { optionalAuth, requireAdmin } from '../lib/context.js';
+import { optionalAuth, requirePermission } from '../lib/context.js';
 import { parseBody, parseParams, parseQuery } from '../middleware/validation.js';
 import * as noteService from '../services/note.service.js';
 import { z } from 'zod';
@@ -53,30 +53,30 @@ export async function noteRoutes(app: FastifyInstance) {
   });
 
   // ---- 管理接口（requireAdmin 是唯一安全边界）----
-  app.get('/admin/notes', { onRequest: [requireAdmin] }, async (req) => {
+  app.get('/admin/notes', { onRequest: [requirePermission('note:read')] }, async (req) => {
     const query = parseQuery(noteListQuerySchema, req);
     return noteService.listNotes(query, false);
   });
 
-  app.get('/admin/notes/:id', { onRequest: [requireAdmin] }, async (req) => {
+  app.get('/admin/notes/:id', { onRequest: [requirePermission('note:read')] }, async (req) => {
     const { id } = parseParams(idParam, req);
     return noteService.getNoteById(id);
   });
 
-  app.post('/admin/notes', { onRequest: [requireAdmin] }, async (req, reply) => {
+  app.post('/admin/notes', { onRequest: [requirePermission('note:create')] }, async (req, reply) => {
     const input = parseBody(createNoteSchema, req);
     const note = await noteService.createNote(input);
     reply.code(201);
     return note;
   });
 
-  app.patch('/admin/notes/:id', { onRequest: [requireAdmin] }, async (req) => {
+  app.patch('/admin/notes/:id', { onRequest: [requirePermission('note:update')] }, async (req) => {
     const { id } = parseParams(idParam, req);
     const input = parseBody(updateNoteSchema, req);
     return noteService.updateNote(id, input);
   });
 
-  app.delete('/admin/notes/:id', { onRequest: [requireAdmin] }, async (req, reply) => {
+  app.delete('/admin/notes/:id', { onRequest: [requirePermission('note:delete')] }, async (req, reply) => {
     const { id } = parseParams(idParam, req);
     await noteService.deleteNote(id);
     reply.code(204).send();

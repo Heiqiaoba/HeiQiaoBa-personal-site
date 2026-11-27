@@ -8,7 +8,7 @@
  * 仅管理员可用，文件类型与大小有限制，文件名用 UUID 防止覆盖与路径穿越。
  */
 import type { FastifyInstance } from 'fastify';
-import { requireAdmin } from '../lib/context.js';
+import { requirePermission } from '../lib/context.js';
 import { Errors } from '../lib/errors.js';
 import { storage } from '../lib/storage.js';
 import { z } from 'zod';
@@ -26,7 +26,7 @@ import path from 'node:path';
 const nameParam = z.object({ name: z.string().regex(/^[a-zA-Z0-9._-]+$/) });
 
 export async function uploadRoutes(app: FastifyInstance) {
-  app.post('/upload', { onRequest: [requireAdmin] }, async (req) => {
+  app.post('/upload', { onRequest: [requirePermission('image:upload')] }, async (req) => {
     const data = await req.file();
     if (!data) throw Errors.badRequest('No file uploaded');
     if (!ALLOWED.has(data.mimetype)) throw Errors.badRequest('Unsupported image type');
@@ -37,9 +37,9 @@ export async function uploadRoutes(app: FastifyInstance) {
     return { url };
   });
 
-  app.get('/images', { onRequest: [requireAdmin] }, async () => storage.list());
+  app.get('/images', { onRequest: [requirePermission('image:read')] }, async () => storage.list());
 
-  app.delete('/images/:name', { onRequest: [requireAdmin] }, async (req) => {
+  app.delete('/images/:name', { onRequest: [requirePermission('image:delete')] }, async (req) => {
     const { name } = nameParam.parse(req.params);
     await storage.remove(name);
     return { ok: true };

@@ -64,7 +64,8 @@ export const auth = betterAuth({
   },
   plugins: [
     admin({
-      defaultRole: 'user',
+      // 注册用户默认访客：无任何管理权限（权限由 RBAC 表动态分配）
+      defaultRole: 'guest',
       adminRoles: ['admin'],
       // 生产通过 env 指定管理员 user id（逗号分隔）；未设置时无人拥有管理员权限
       adminUserIds: env.ADMIN_USER_IDS.split(',')

@@ -5,6 +5,7 @@
  * 前端只负责展示与把用户操作转成查询参数（防抖搜索）。
  */
 import { useI18n } from '@/i18n';
+import { usePermissions } from '@/lib/permissions';
 import { useAdminNotes, useDeleteNote, usePublishNote } from '@/api/notes';
 import type { NoteListQuery } from '@/api/contract';
 import { Button, Input, Popconfirm, Table, Tag, Typography, message } from 'antd';
@@ -19,6 +20,7 @@ type SortBy = NonNullable<NoteListQuery['sortBy']>;
 
 export function AdminNotes({ mode = 'all' }: { mode?: 'all' | 'drafts' }) {
   const { t } = useI18n();
+  const { has } = usePermissions();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [keyword, setKeyword] = useState('');
@@ -94,7 +96,7 @@ export function AdminNotes({ mode = 'all' }: { mode?: 'all' | 'drafts' }) {
       title: '', key: 'actions', width: 130,
       render: (_, note) => (
         <span className="flex gap-1">
-          {note.status === 'draft' && (
+          {note.status === 'draft' && has('note:publish') && (
             <Popconfirm
               title={t('admin.publishConfirm')}
               onConfirm={() =>
@@ -106,15 +108,19 @@ export function AdminNotes({ mode = 'all' }: { mode?: 'all' | 'drafts' }) {
               <Button type="link" size="small" className="!px-1">{t('admin.publish')}</Button>
             </Popconfirm>
           )}
-          <Link to={`/write/${note.id}`}>
-            <Button type="link" size="small" className="!px-1">{t('admin.edit')}</Button>
-          </Link>
-          <Popconfirm
-            title={t('admin.deleteConfirm')}
-            onConfirm={() => del.mutate(note.id, { onSuccess: () => message.success(t('admin.saved')) })}
-          >
-            <Button type="link" size="small" danger className="!px-1">{t('admin.delete')}</Button>
-          </Popconfirm>
+          {has('note:update') && (
+            <Link to={`/write/${note.id}`}>
+              <Button type="link" size="small" className="!px-1">{t('admin.edit')}</Button>
+            </Link>
+          )}
+          {has('note:delete') && (
+            <Popconfirm
+              title={t('admin.deleteConfirm')}
+              onConfirm={() => del.mutate(note.id, { onSuccess: () => message.success(t('admin.saved')) })}
+            >
+              <Button type="link" size="small" danger className="!px-1">{t('admin.delete')}</Button>
+            </Popconfirm>
+          )}
         </span>
       ),
     },
@@ -135,7 +141,7 @@ export function AdminNotes({ mode = 'all' }: { mode?: 'all' | 'drafts' }) {
             onChange={(e) => setKeyword(e.target.value)}
             className="!w-56"
           />
-          {selected.length > 0 && (
+          {selected.length > 0 && has('note:delete') && (
             <Popconfirm
               title={`${t('admin.deleteConfirm')} (${selected.length})`}
               onConfirm={() => {
@@ -148,7 +154,7 @@ export function AdminNotes({ mode = 'all' }: { mode?: 'all' | 'drafts' }) {
               <Button danger size="small">{t('admin.delete')} ({selected.length})</Button>
             </Popconfirm>
           )}
-          <Link to="/write/new"><Button type="primary">{t('admin.new')}</Button></Link>
+          {has('note:create') && <Link to="/write/new"><Button type="primary">{t('admin.new')}</Button></Link>}
         </span>
       </div>
 

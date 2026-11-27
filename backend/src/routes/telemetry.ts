@@ -12,7 +12,7 @@
  */
 import { telemetryBatchSchema, telemetryQuerySchema } from '../contract.js';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { requireAdmin, resolveSession } from '../lib/context.js';
+import { requirePermission, resolveSession } from '../lib/context.js';
 import { writeTelemetry } from '../lib/telemetry-sink.js';
 import { parseBody, parseQuery } from '../middleware/validation.js';
 import { getDashboard } from '../services/telemetry.service.js';
@@ -41,7 +41,7 @@ export async function telemetryRoutes(app: FastifyInstance) {
   // 看板数据：仅管理员可访问
   app.get(
     '/telemetry/dashboard',
-    { onRequest: [requireAdmin], schema: { tags: ['telemetry'], summary: '埋点看板数据' } },
+    { onRequest: [requirePermission('analytics:read')], schema: { tags: ['telemetry'], summary: '埋点看板数据' } },
     async (req) => {
       const query = parseQuery(telemetryQuerySchema, req);
       return getDashboard(query);

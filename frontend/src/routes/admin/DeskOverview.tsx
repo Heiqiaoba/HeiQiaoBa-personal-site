@@ -2,6 +2,7 @@
  * 写作台概览：统计卡片 + 最近更新 + 快捷操作（参考 vanBlog 数据概览 Tab）。
  */
 import { useI18n } from '@/i18n';
+import { usePermissions, Can } from '@/lib/permissions';
 import { useAdminNotes } from '@/api/notes';
 import { Button, Typography } from 'antd';
 import { Link } from 'react-router-dom';
@@ -59,6 +60,13 @@ export function DeskOverview() {
             {notes.length === 0 && (
               <Paragraph type="secondary" className="!m-0 !p-5">{t('notes.empty')}</Paragraph>
             )}
+            {notes.length === 0 && (
+              <Can perm="note:create">
+                <div className="p-5">
+                  <Link to="/write/new"><Button type="primary">{t('admin.new')}</Button></Link>
+                </div>
+              </Can>
+            )}
           </div>
         </section>
 
@@ -66,12 +74,14 @@ export function DeskOverview() {
         <section>
           <Title level={4} className="!mb-4">{t('desk.quick')}</Title>
           <div className="space-y-3">
-            <Link to="/write/new" className="block no-underline">
-              <div className="group rounded-xl border border-[color:var(--border)] bg-white p-5 transition-shadow hover:shadow-sm">
-                <Title level={5} className="!mb-1 !text-gray-800">{t('desk.quick.new')}</Title>
-                <Paragraph type="secondary" className="!mb-0 !text-sm">{t('desk.quick.newDesc')}</Paragraph>
-              </div>
-            </Link>
+            <Can perm="note:create">
+              <Link to="/write/new" className="block no-underline">
+                <div className="group rounded-xl border border-[color:var(--border)] bg-white p-5 transition-shadow hover:shadow-sm">
+                  <Title level={5} className="!mb-1 !text-gray-800">{t('desk.quick.new')}</Title>
+                  <Paragraph type="secondary" className="!mb-0 !text-sm">{t('desk.quick.newDesc')}</Paragraph>
+                </div>
+              </Link>
+            </Can>
             <Link to="/write/drafts" className="block no-underline">
               <div className="group rounded-xl border border-[color:var(--border)] bg-white p-5 transition-shadow hover:shadow-sm">
                 <Title level={5} className="!mb-1 !text-gray-800">{t('desk.quick.drafts')}</Title>
