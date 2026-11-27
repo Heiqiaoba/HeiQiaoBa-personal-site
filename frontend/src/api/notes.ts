@@ -39,7 +39,10 @@ async function fetchNotes(query: Partial<NoteListQuery> = {}): Promise<NoteList>
   return api.get<NoteList>('/notes', { params: query });
 }
 async function fetchNote(slug: string): Promise<Note> {
-  return api.get<Note>(`/notes/${encodeURIComponent(slug)}`);
+  // 带上访客标识，后端按 visitorId 24h 内去重计阅读量
+  return api.get<Note>(`/notes/${encodeURIComponent(slug)}`, {
+    params: { visitorId: getVisitorId() },
+  });
 }
 
 export function useNotes(query: Partial<NoteListQuery> = {}) {

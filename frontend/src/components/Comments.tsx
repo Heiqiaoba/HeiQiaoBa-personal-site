@@ -1,42 +1,46 @@
 /**
  * 评论组件：Giscus（基于 GitHub Discussions，零数据库、免自建审核）。
  *
- * 配置：在 .env 里设置 VITE_GISCUS_REPO / VITE_GISCUS_REPO_ID /
- * VITE_GISCUS_CATEGORY / VITE_GISCUS_CATEGORY_ID。
- * 任一缺失则不渲染评论（未配置时静默隐藏）。
+ * 配置由后端 GET /public-config 在运行时下发（后端环境变量 GISCUS_*），
+ * 四项都填才渲染；未配置时静默隐藏。改配置无需重新构建前端。
  */
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Typography } from 'antd';
+import { api } from '@/api/client';
 
 const { Paragraph } = Typography;
 
-declare global {
-  interface Window {
-    giscus?: { giscus: { setConfig: (config: Record<string, string>) => void } };
-  }
-}
-
-const cfg = {
-  repo: import.meta.env.VITE_GISCUS_REPO,
-  repoId: import.meta.env.VITE_GISCUS_REPO_ID,
-  category: import.meta.env.VITE_GISCUS_CATEGORY,
-  categoryId: import.meta.env.VITE_GISCUS_CATEGORY_ID,
+type GiscusConfig = {
+  repo: string;
+  repoId: string;
+  category: string;
+  categoryId: string;
 };
-const enabled = Boolean(cfg.repo && cfg.repoId && cfg.category && cfg.categoryId);
 
 export function Comments({ slug }: { slug: string }) {
   const ref = useRef<HTMLDivElement>(null);
+  const [cfg, setCfg] = useState<GiscusConfig | null>(null);
+
+  // 拉取运行时配置（失败静默：评论是可选功能）
+  useEffect(() => {
+    let active = true;
+    api
+      .get<{ giscus: GiscusConfig | null }>('/public-config')
+      .then((res) => { if (active) setCfg(res.giscus); })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
-    if (!enabled || !ref.current) return;
+    if (!cfg || !ref.current) return;
     const container = ref.current;
     container.innerHTML = '';
     const script = document.createElement('script');
     script.src = 'https://giscus.app/client.js';
-    script.setAttribute('data-repo', cfg.repo!);
-    script.setAttribute('data-repo-id', cfg.repoId!);
-    script.setAttribute('data-category', cfg.category!);
-    script.setAttribute('data-category-id', cfg.categoryId!);
+    script.setAttribute('data-repo', cfg.repo);
+    script.setAttribute('data-repo-id', cfg.repoId);
+    script.setAttribute('data-category', cfg.category);
+    script.setAttribute('data-category-id', cfg.categoryId);
     script.setAttribute('data-mapping', 'specific');
     script.setAttribute('data-term', slug);
     script.setAttribute('data-reactions-enabled', '1');
@@ -48,9 +52,9 @@ export function Comments({ slug }: { slug: string }) {
     script.async = true;
     container.appendChild(script);
     return () => { container.innerHTML = ''; };
-  }, [slug]);
+  }, [cfg, slug]);
 
-  if (!enabled) return null;
+  if (!cfg) return null;
   return (
     <section className="mt-12 border-t border-[color:var(--border)] pt-8">
       <Paragraph type="secondary">评论</Paragraph>

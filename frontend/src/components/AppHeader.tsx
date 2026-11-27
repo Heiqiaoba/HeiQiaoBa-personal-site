@@ -29,6 +29,7 @@ export function AppHeader() {
         </Link>
         <nav className="hidden items-center gap-1 sm:flex">
           <Link to="/notes" className="rounded px-2 py-1 text-sm text-gray-600 hover:text-[color:var(--brand)] hover:no-underline dark:!text-gray-300">{t('home.notes')}</Link>
+          <Link to="/favorites" className="rounded px-2 py-1 text-sm text-gray-600 hover:text-[color:var(--brand)] hover:no-underline dark:!text-gray-300">{t('fav.title')}</Link>
           <Link to="/archives" className="rounded px-2 py-1 text-sm text-gray-600 hover:text-[color:var(--brand)] hover:no-underline dark:!text-gray-300">{t('archive.title')}</Link>
           <Link to="/projects" className="rounded px-2 py-1 text-sm text-gray-600 hover:text-[color:var(--brand)] hover:no-underline dark:!text-gray-300">{t('home.projects')}</Link>
           <Link to="/about" className="rounded px-2 py-1 text-sm text-gray-600 hover:text-[color:var(--brand)] hover:no-underline dark:!text-gray-300">{t('home.about')}</Link>

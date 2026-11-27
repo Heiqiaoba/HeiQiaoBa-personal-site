@@ -3,6 +3,7 @@
  */
 import { useI18n } from '@/i18n';
 import { useNotes, useTags } from '@/api/notes';
+import { Highlight } from '@/components/Highlight';
 import { Button, Input, Pagination, Tag, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -76,10 +77,10 @@ export function Notes() {
                 {['✦', '◈', '❋', '✧', '◐', '✎'][i % 6]}
               </div>
               <Title level={4} className="!mb-2 !text-base !leading-snug !text-[color:var(--text)] group-hover:!text-[color:var(--brand)]">
-                {note.title}
+                <Highlight text={note.title} keyword={debounced} />
               </Title>
               <Paragraph className="!mb-3 !line-clamp-2 !flex-1 !text-sm !text-[color:var(--text-secondary)]">
-                {note.summary || note.content.replace(/[#*`>\[\]]/g, '').slice(0, 100)}
+                <Highlight text={note.summary || note.content.replace(/[#*`>\[\]]/g, '').slice(0, 100)} keyword={debounced} />
               </Paragraph>
               <div className="flex flex-wrap items-center gap-2">
                 {note.tags.slice(0, 2).map((x) => <Tag key={x} className="!text-xs">{x}</Tag>)}

@@ -27,6 +27,7 @@ import { Users } from '@/routes/admin/Users';
 import { Roles } from '@/routes/admin/Roles';
 import { Permissions } from '@/routes/admin/Permissions';
 import { Account } from '@/routes/Account';
+import { Favorites } from '@/routes/Favorites';
 import { ConfigProvider, Layout } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import { Route, Routes, useLocation } from 'react-router-dom';
@@ -47,6 +48,7 @@ export function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/notes" element={<Notes />} />
+            <Route path="/favorites" element={<Favorites />} />
             <Route path="/archives" element={<Archives />} />
             <Route path="/notes/:slug" element={<NoteDetail />} />
             <Route path="/projects" element={<Projects />} />

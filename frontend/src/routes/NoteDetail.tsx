@@ -5,7 +5,9 @@
 import { useI18n } from '@/i18n';
 import { useLikeStatus, useNote, useNotes, useToggleLike } from '@/api/notes';
 import { Can } from '@/lib/permissions';
+import { favorites } from '@/lib/favorites';
 import { track } from '@/lib/telemetry';
+import { useSyncExternalStore } from 'react';
 import { ReadingProgress } from '@/components/ReadingProgress';
 import { MarkdownView } from '@/components/MarkdownView';
 import { Comments } from '@/components/Comments';
@@ -42,6 +44,7 @@ export function NoteDetail() {
   const { t } = useI18n();
   const { data: note, isLoading, isError } = useNote(slug);
   const { data: allNotes } = useNotes({ page: 1, pageSize: 100 });
+  const favSlugs = useSyncExternalStore(favorites.subscribe, favorites.getSnapshot, favorites.getSnapshot);
   const { data: likeStatus } = useLikeStatus(note?.id);
   const toggleLike = useToggleLike(note?.id ?? '');
   const [liked, setLiked] = useState(false);
@@ -136,6 +139,13 @@ export function NoteDetail() {
               className="!ml-1"
             >
               {liked ? '♥ ' : '♡ '}{note.likeCount} {t('notes.likes')}
+            </Button>
+            <Button
+              size="small"
+              type={favSlugs.includes(note.slug) ? 'primary' : 'default'}
+              onClick={() => favorites.toggle(note.slug)}
+            >
+              {favSlugs.includes(note.slug) ? '★ ' : '☆ '}{t(favSlugs.includes(note.slug) ? 'notes.favorited' : 'notes.favorite')}
             </Button>
           </div>
           {note.summary && (

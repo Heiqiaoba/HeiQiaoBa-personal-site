@@ -40,6 +40,11 @@ const envSchema = z.object({
   S3_ACCESS_KEY: z.string().optional(),
   S3_SECRET_KEY: z.string().optional(),
   S3_PUBLIC_URL: z.string().optional(),
+  /** Giscus 评论（四项都填才启用；运行时下发，前端无需重新构建） */
+  GISCUS_REPO: z.string().optional(),
+  GISCUS_REPO_ID: z.string().optional(),
+  GISCUS_CATEGORY: z.string().optional(),
+  GISCUS_CATEGORY_ID: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

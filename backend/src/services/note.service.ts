@@ -142,8 +142,34 @@ export async function getNoteBySlug(slug: string, publicOnly: boolean): Promise<
   return toDTO(row, tagMap.get(row.id) ?? [], likeMap.get(row.id) ?? 0);
 }
 
-/** 阅读量 +1（SQL 原子自增，不影响本次响应返回的计数） */
-export async function incrementViewCount(id: string): Promise<void> {
+/**
+ * 阅读量 +1（按访客去重）：同一 visitorId 24 小时内只读计数一次。
+ * 用唯一索引 + onConflictDoNothing 保证并发下也只计一次。
+ */
+export async function incrementViewCount(id: string, visitorId: string): Promise<void> {
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const record = await db
+    .insert(schema.noteViews)
+    .values({ id: crypto.randomUUID(), noteId: id, visitorId })
+    .onConflictDoNothing({ target: [schema.noteViews.noteId, schema.noteViews.visitorId] })
+    .returning({ id: schema.noteViews.id });
+
+  // 已有记录：超过 24 小时则更新时间并重新计数；24 小时内则跳过
+  if (record.length === 0) {
+    const updated = await db
+      .update(schema.noteViews)
+      .set({ createdAt: new Date() })
+      .where(
+        and(
+          eq(schema.noteViews.noteId, id),
+          eq(schema.noteViews.visitorId, visitorId),
+          sql`${schema.noteViews.createdAt} < ${cutoff}`,
+        ),
+      )
+      .returning({ id: schema.noteViews.id });
+    if (updated.length === 0) return;
+  }
+
   await db
     .update(schema.notes)
     .set({ viewCount: sql`${schema.notes.viewCount} + 1` })

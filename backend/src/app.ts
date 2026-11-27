@@ -29,6 +29,7 @@ import { telemetryRoutes } from './routes/telemetry.js';
 import { uploadRoutes } from './routes/upload.js';
 import { rbacRoutes } from './routes/rbac.js';
 import { sitemapRoutes } from './routes/sitemap.js';
+import { publicConfigRoutes } from './routes/public-config.js';
 import { UPLOAD_DIR } from './lib/storage.js';
 
 /**
@@ -164,6 +165,7 @@ export async function buildApp() {
   // RSS / 站点地图 / robots：挂在根路径（不带 /api 前缀）
   await feedRoutes(app);
   await sitemapRoutes(app);
+  await publicConfigRoutes(app);
 
   // 业务路由统一挂到 /api/v1
   await app.register(

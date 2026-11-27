@@ -69,6 +69,25 @@ export const likes = pgTable(
 );
 
 /**
+ * 阅读量去重：同一访客（visitorId）24 小时内对同一笔记只计一次阅读。
+ */
+export const noteViews = pgTable(
+  'note_views',
+  {
+    id: text('id').primaryKey(),
+    noteId: text('note_id')
+      .notNull()
+      .references(() => notes.id, { onDelete: 'cascade' }),
+    visitorId: text('visitor_id').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('note_views_note_visitor_unique').on(table.noteId, table.visitorId),
+    index('note_views_created_idx').on(table.createdAt),
+  ],
+);
+
+/**
  * RBAC：权限（按钮级）。code 形如 `note:create`、`user:read`。
  */
 export const permissions = pgTable('permissions', {

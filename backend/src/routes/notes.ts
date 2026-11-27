@@ -26,8 +26,11 @@ export async function noteRoutes(app: FastifyInstance) {
   app.get('/notes/:slug', async (req) => {
     const { slug } = parseParams(slugParam, req);
     const note = await noteService.getNoteBySlug(slug, true);
-    // 阅读量 +1（不阻塞响应语义；失败也不影响阅读）
-    void noteService.incrementViewCount(note.id).catch(() => {});
+    // 阅读量 +1（按 visitorId 去重，24 小时内同一访客只计一次；失败不影响阅读）
+    const visitorId = (req.query as { visitorId?: string }).visitorId;
+    if (visitorId && visitorId.length <= 100) {
+      void noteService.incrementViewCount(note.id, visitorId).catch(() => {});
+    }
     return note;
   });
 
