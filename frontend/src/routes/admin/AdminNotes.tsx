@@ -166,7 +166,7 @@ export function AdminNotes({ mode = 'all' }: { mode?: 'all' | 'drafts' }) {
           loading={isLoading}
           size="middle"
           onChange={onTableChange}
-          rowSelection={{ selectedRowKeys: selected, onChange: setSelected }}
+          rowSelection={{ selectedRowKeys: selected, onChange: setSelected, selections: false }}
           pagination={{
             current: page,
             pageSize,
