@@ -165,7 +165,6 @@ export async function buildApp() {
   // RSS / 站点地图 / robots：挂在根路径（不带 /api 前缀）
   await feedRoutes(app);
   await sitemapRoutes(app);
-  await publicConfigRoutes(app);
 
   // 业务路由统一挂到 /api/v1
   await app.register(
@@ -175,6 +174,7 @@ export async function buildApp() {
       await noteRoutes(api);
       await uploadRoutes(api);
       await rbacRoutes(api);
+      await publicConfigRoutes(api);
     },
     { prefix: '/api/v1' },
   );
