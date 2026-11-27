@@ -145,3 +145,13 @@ DATABASE_URL='<Neon连接串>' node dist/db/create-admin.js <email> <name> '<pas
 - 生产环境 Fastify logger 用配置对象（非 Pino 实例），避免启动报错
 - `BETTER_AUTH_URL` / `CORS_ORIGIN` / `BACKEND_URL` 均通过环境变量配置
 - 认证 Cookie 在生产环境自动加 `secure`（`NODE_ENV=production`）
+
+## 导入本地示例笔记（可选）
+
+本地开发库里有 5 篇示例笔记、9 个标签和 10 条关联，线上 Neon 初始为空。若想把它们搬到线上：
+
+1. 打开 [`docs/import-sample-notes.sql`](import-sample-notes.sql)，复制全部内容
+2. Neon 控制台 → SQL Editor → 粘贴 → Run
+3. 脚本幂等（`ON CONFLICT DO NOTHING`），重复执行不会覆盖已有内容
+
+> 该 SQL 由本地 `app` 库导出，Markdown 正文用 PostgreSQL `E'...'` 转义为单行，已验证可在空库完整导入 5/9/10 条记录。
