@@ -8,9 +8,9 @@
  * 仅管理员可用，文件类型与大小有限制，文件名用 UUID 防止覆盖与路径穿越。
  */
 import type { FastifyInstance } from 'fastify';
-import { requireAdmin } from '../lib/context';
-import { Errors } from '../lib/errors';
-import { storage } from '../lib/storage';
+import { requireAdmin } from '../lib/context.js';
+import { Errors } from '../lib/errors.js';
+import { storage } from '../lib/storage.js';
 import { z } from 'zod';
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB

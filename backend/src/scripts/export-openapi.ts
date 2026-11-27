@@ -8,7 +8,7 @@
  * 不启动监听端口，导出完即关闭应用。
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { buildApp } from '../app';
+import { buildApp } from '../app.js';
 
 /** 导出规范到指定路径（默认本项目 openapi.json），自动创建缺失的父目录 */
 async function main() {

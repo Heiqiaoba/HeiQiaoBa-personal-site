@@ -5,7 +5,7 @@
  * 新增表后执行 pnpm db:generate 生成迁移。
  */
 import { index, integer, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
-import * as auth from './auth-schema';
+import * as auth from './auth-schema.js';
 
 /** 笔记正文表 */
 export const notes = pgTable(

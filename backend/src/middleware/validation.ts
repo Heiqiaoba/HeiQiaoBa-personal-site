@@ -8,7 +8,7 @@
  */
 import type { FastifyRequest } from 'fastify';
 import { flattenError, type z } from 'zod';
-import { Errors } from '../lib/errors';
+import { Errors } from '../lib/errors.js';
 
 /**
  * 校验请求体，校验失败抛 400 BAD_REQUEST（details 为字段级错误）。

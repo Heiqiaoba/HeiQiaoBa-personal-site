@@ -4,10 +4,10 @@
  * 公开接口只返回 published；写入接口全部挂 requireAdmin 守卫（唯一安全边界）。
  */
 import type { FastifyInstance } from 'fastify';
-import { createNoteSchema, noteListQuerySchema, updateNoteSchema } from '../contract';
-import { requireAdmin } from '../lib/context';
-import { parseBody, parseParams, parseQuery } from '../middleware/validation';
-import * as noteService from '../services/note.service';
+import { createNoteSchema, noteListQuerySchema, updateNoteSchema } from '../contract.js';
+import { requireAdmin } from '../lib/context.js';
+import { parseBody, parseParams, parseQuery } from '../middleware/validation.js';
+import * as noteService from '../services/note.service.js';
 import { z } from 'zod';
 
 const idParam = z.object({ id: z.string().min(1) });

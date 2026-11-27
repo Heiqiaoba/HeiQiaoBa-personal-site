@@ -3,7 +3,7 @@
  * 正文用 Markdown 原文包裹在 CDATA 中（简单可靠，阅读器可自行渲染）。
  */
 import type { FastifyInstance, FastifyReply } from 'fastify';
-import * as noteService from '../services/note.service';
+import * as noteService from '../services/note.service.js';
 
 function escapeXml(s: string): string {
   return s.replace(/[<>&"']/g, (c) =>

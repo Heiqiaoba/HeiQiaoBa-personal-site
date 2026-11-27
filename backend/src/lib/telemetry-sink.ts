@@ -6,9 +6,9 @@
  * 当前实现写结构化日志，接数仓时只需替换 write 内部实现（批写 Kafka/ClickHouse/
  * 时序库），路由层与事件格式都无需改动。
  */
-import type { TelemetryEvent } from '../contract';
-import { env } from '../config/env';
-import { logger } from '../config/logger';
+import type { TelemetryEvent } from '../contract.js';
+import { env } from '../config/env.js';
+import { logger } from '../config/logger.js';
 
 /**
  * 写入一批埋点事件。

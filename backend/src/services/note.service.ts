@@ -5,9 +5,9 @@
  * 标签以名称存储，写入时按名称复用/创建 tag，并重建 note_tags 关联。
  */
 import { and, asc, desc, eq, ilike, inArray, or, sql, type SQL } from 'drizzle-orm';
-import type { CreateNoteInput, Note, NoteListQuery, UpdateNoteInput } from '../contract';
-import { db, schema } from '../db';
-import { Errors } from '../lib/errors';
+import type { CreateNoteInput, Note, NoteListQuery, UpdateNoteInput } from '../contract.js';
+import { db, schema } from '../db/index.js';
+import { Errors } from '../lib/errors.js';
 
 type NoteRow = typeof schema.notes.$inferSelect;
 

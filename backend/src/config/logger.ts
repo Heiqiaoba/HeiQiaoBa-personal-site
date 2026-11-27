@@ -6,7 +6,7 @@
  * 并去掉 URL query，防止 token 等敏感参数随访问日志泄漏。
  */
 import pino, { type Logger } from 'pino';
-import { env, isProd } from './env';
+import { env, isProd } from './env.js';
 
 /**
  * 全局 logger：生产输出 JSON 便于日志系统采集，开发用 pino-pretty 便于阅读。

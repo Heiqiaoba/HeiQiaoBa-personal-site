@@ -6,10 +6,10 @@
  * 分层策略：已知业务错误按自身状态码/code 返回；ZodError 统一 400；
  * 未知错误只记录服务端日志并返回泛化 500，避免向客户端泄露内部细节。
  */
-import type { ErrorResponse } from '../contract';
+import type { ErrorResponse } from '../contract.js';
 import type { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
 import { ZodError, flattenError } from 'zod';
-import { AppError } from '../lib/errors';
+import { AppError } from '../lib/errors.js';
 
 /**
  * Fastify 全局错误处理器：按错误类型分派响应，所有分支都附带 requestId 便于追踪。

@@ -12,8 +12,8 @@
  * - getAuth：路由处理器中类型安全地读取已挂载上下文，避免非空断言散落各处。
  */
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { auth } from './auth';
-import { Errors } from './errors';
+import { auth } from './auth.js';
+import { Errors } from './errors.js';
 
 /**
  * 鉴权上下文：路由处理器唯一应消费的用户身份信息。

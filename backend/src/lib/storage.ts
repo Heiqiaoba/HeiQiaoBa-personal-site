@@ -9,7 +9,7 @@
  */
 import { mkdir, readdir, stat, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { env } from '../config/env';
+import { env } from '../config/env.js';
 
 export type StoredFile = {
   name: string;

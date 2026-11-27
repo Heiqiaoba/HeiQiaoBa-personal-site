@@ -10,8 +10,8 @@
 import 'dotenv/config';
 import { hashPassword } from 'better-auth/crypto';
 import { eq } from 'drizzle-orm';
-import { db } from './index';
-import { accounts, users } from './schema';
+import { db } from './index.js';
+import { accounts, users } from './schema.js';
 
 function makeId() {
   return crypto.randomUUID();

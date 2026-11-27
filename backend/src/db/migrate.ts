@@ -10,7 +10,7 @@ import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import pg from 'pg';
-import { env } from '../config/env';
+import { env } from '../config/env.js';
 
 /** 建立临时连接池、应用迁移并关闭连接；失败时由入口 catch 以非零码退出 */
 async function main() {

@@ -8,8 +8,8 @@
  */
 import 'dotenv/config';
 import { eq } from 'drizzle-orm';
-import { db } from './index';
-import { users } from './schema';
+import { db } from './index.js';
+import { users } from './schema.js';
 
 /**
  * 提权/降级入口：解析命令行参数，校验角色取值，按邮箱更新并返回变更结果。

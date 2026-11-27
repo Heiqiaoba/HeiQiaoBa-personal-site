@@ -9,8 +9,8 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { admin } from 'better-auth/plugins';
-import { env, isProd } from '../config/env';
-import { db, schema } from '../db';
+import { env, isProd } from '../config/env.js';
+import { db, schema } from '../db/index.js';
 
 /**
  * Better Auth 实例：邮箱密码 + 数据库会话，Drizzle adapter 直连本项目连接池。

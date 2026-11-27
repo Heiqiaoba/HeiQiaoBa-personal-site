@@ -6,7 +6,7 @@
  */
 import { sql } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
-import { db } from '../db';
+import { db } from '../db/index.js';
 
 /**
  * 注册健康检查路由。

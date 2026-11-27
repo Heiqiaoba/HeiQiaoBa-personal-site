@@ -10,11 +10,11 @@
  * - 路由配置 200/min 的独立限流（高于全局 100/min），既防刷又不误伤正常上报；
  * - 立即返回 202 Accepted，落地耗时不阻塞客户端。
  */
-import { telemetryBatchSchema } from '../contract';
+import { telemetryBatchSchema } from '../contract.js';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { resolveSession } from '../lib/context';
-import { writeTelemetry } from '../lib/telemetry-sink';
-import { parseBody } from '../middleware/validation';
+import { resolveSession } from '../lib/context.js';
+import { writeTelemetry } from '../lib/telemetry-sink.js';
+import { parseBody } from '../middleware/validation.js';
 
 /** 注册埋点接收端点 */
 export async function telemetryRoutes(app: FastifyInstance) {

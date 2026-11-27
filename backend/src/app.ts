@@ -18,16 +18,16 @@ import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import { toNodeHandler } from 'better-auth/node';
 import Fastify from 'fastify';
-import { env, isProd } from './config/env';
-import { logger, requestLogger } from './config/logger';
-import { auth } from './lib/auth';
-import { errorHandler } from './middleware/error-handler';
-import { feedRoutes } from './routes/feed';
-import { healthRoutes } from './routes/health';
-import { noteRoutes } from './routes/notes';
-import { telemetryRoutes } from './routes/telemetry';
-import { uploadRoutes } from './routes/upload';
-import { UPLOAD_DIR } from './lib/storage';
+import { env, isProd } from './config/env.js';
+import { logger, requestLogger } from './config/logger.js';
+import { auth } from './lib/auth.js';
+import { errorHandler } from './middleware/error-handler.js';
+import { feedRoutes } from './routes/feed.js';
+import { healthRoutes } from './routes/health.js';
+import { noteRoutes } from './routes/notes.js';
+import { telemetryRoutes } from './routes/telemetry.js';
+import { uploadRoutes } from './routes/upload.js';
+import { UPLOAD_DIR } from './lib/storage.js';
 
 /**
  * 构建并装配完整的 Fastify 实例（不监听端口）。
