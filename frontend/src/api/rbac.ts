@@ -59,6 +59,13 @@ export function useSetUserRole() {
     onSuccess: invalidate,
   });
 }
+export function useDeleteUser() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/admin/users/${id}`),
+    onSuccess: invalidate,
+  });
+}
 export function useBanUser() {
   const invalidate = useInvalidate();
   return useMutation({

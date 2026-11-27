@@ -120,7 +120,8 @@ DATABASE_URL='<Neon连接串>' node dist/db/create-admin.js <email> <name> '<pas
 ### RBAC 权限体系
 
 - **角色**：内置 `admin`（全部权限）与 `guest`（无任何管理权限，新注册用户默认此角色）；可在后台新建自定义角色
-- **权限**：按钮/接口级，共 15 个（`note:create`、`user:role`、`analytics:read` 等），后端代码 `ALL_PERMISSIONS` 是权威定义
+- **权限**：按钮/接口级，共 16 个（`note:create`、`user:role`、`user:delete`、`analytics:read` 等），后端代码 `ALL_PERMISSIONS` 是权威定义
+- **安全阀**：禁止降级/封禁/删除「最后一个可用管理员」（`countActiveAdmins`），防止把自己锁在门外；也不能删除自己的账号
 - **校验公共方法**：后端 `requirePermission(code)` 守卫（[`lib/context.ts`](../backend/src/lib/context.ts)）+ `hasPermission(userId, code)`（[`services/rbac.service.ts`](../backend/src/services/rbac.service.ts)）；前端 `usePermissions()/Can/can()`（[`lib/permissions.tsx`](../frontend/src/lib/permissions.tsx)）
 - **管理界面**：写作台 → 用户管理 / 角色管理 / 权限管理（各按钮按权限显隐；内置角色不可改删）
 - **账户设置**：顶部导航「账户设置」（所有登录用户可见，可改密码）；旧 `/write/settings` 已指向同一页面

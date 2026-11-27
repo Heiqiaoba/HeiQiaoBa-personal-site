@@ -4,6 +4,8 @@
  * - GET  /admin/users           用户列表（user:read）
  * - PATCH /admin/users/:id/role 分配角色（user:role）
  * - PATCH /admin/users/:id/ban  封禁/解封（user:ban）
+ * - DELETE /admin/users/:id     删除用户（user:delete）
+ * 所有涉及管理员的操作都有「最后一个可用管理员」保护。
  * - GET  /admin/roles           角色列表（role:read）
  * - POST /admin/roles           新建角色（role:manage）
  * - PATCH /admin/roles/:id      改角色名/描述（role:manage）
@@ -18,7 +20,7 @@ import { db, schema } from '../db/index.js';
 import { requireAuth, requirePermission } from '../lib/context.js';
 import { Errors } from '../lib/errors.js';
 import { parseBody, parseParams } from '../middleware/validation.js';
-import { ALL_PERMISSIONS, permissionsForUser } from '../services/rbac.service.js';
+import { ALL_PERMISSIONS, countActiveAdmins, permissionsForUser } from '../services/rbac.service.js';
 
 const idParam = z.object({ id: z.string().min(1) });
 
@@ -80,6 +82,11 @@ export async function rbacRoutes(app: FastifyInstance) {
     // 角色必须存在
     const [target] = await db.select({ code: schema.roles.code }).from(schema.roles).where(eq(schema.roles.code, role)).limit(1);
     if (!target) throw Errors.badRequest('Role not found');
+    // 保护：禁止把最后一个可用管理员降级
+    const [user] = await db.select({ role: schema.users.role, banned: schema.users.banned }).from(schema.users).where(eq(schema.users.id, id)).limit(1);
+    if (user?.role === 'admin' && !user.banned && role !== 'admin' && (await countActiveAdmins(id)) === 0) {
+      throw Errors.badRequest('Cannot demote the last active admin');
+    }
     await db.update(schema.users).set({ role }).where(eq(schema.users.id, id));
     return { ok: true };
   });
@@ -87,10 +94,32 @@ export async function rbacRoutes(app: FastifyInstance) {
   app.patch('/admin/users/:id/ban', { onRequest: [requirePermission('user:ban')] }, async (req) => {
     const { id } = parseParams(idParam, req);
     const { banned, reason } = parseBody(banSchema, req);
+    // 保护：禁止封禁最后一个可用管理员
+    const [user] = await db.select({ role: schema.users.role, banned: schema.users.banned }).from(schema.users).where(eq(schema.users.id, id)).limit(1);
+    if (banned && user?.role === 'admin' && !user.banned && (await countActiveAdmins(id)) === 0) {
+      throw Errors.badRequest('Cannot ban the last active admin');
+    }
     await db
       .update(schema.users)
       .set({ banned, banReason: banned ? (reason ?? null) : null })
       .where(eq(schema.users.id, id));
+    return { ok: true };
+  });
+
+  // 删除用户（会话/账号/点赞等外键按各自约束级联；作者本人不能删）
+  app.delete('/admin/users/:id', { onRequest: [requirePermission('user:delete')] }, async (req) => {
+    const { id } = parseParams(idParam, req);
+    if (id === req.auth!.userId) throw Errors.badRequest('Cannot delete your own account');
+    const [user] = await db.select({ role: schema.users.role, banned: schema.users.banned }).from(schema.users).where(eq(schema.users.id, id)).limit(1);
+    if (!user) throw Errors.notFound('User not found');
+    // 保护：禁止删除最后一个可用管理员
+    if (user.role === 'admin' && !user.banned && (await countActiveAdmins(id)) === 0) {
+      throw Errors.badRequest('Cannot delete the last active admin');
+    }
+    // 先删依赖表，再删用户（session/account 有 cascade，likes 无外键到 user 故不受影响）
+    await db.delete(schema.sessions).where(eq(schema.sessions.userId, id));
+    await db.delete(schema.accounts).where(eq(schema.accounts.userId, id));
+    await db.delete(schema.users).where(eq(schema.users.id, id));
     return { ok: true };
   });
 

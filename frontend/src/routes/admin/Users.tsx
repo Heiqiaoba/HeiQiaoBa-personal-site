@@ -4,7 +4,7 @@
  */
 import { useI18n } from '@/i18n';
 import { usePermissions } from '@/lib/permissions';
-import { useBanUser, useSetUserRole, useUsers, type UserRow } from '@/api/rbac';
+import { useBanUser, useDeleteUser, useSetUserRole, useUsers, type UserRow } from '@/api/rbac';
 import { useRoles } from '@/api/rbac';
 import { Button, Popconfirm, Select, Table, Tag, Typography, message } from 'antd';
 import { useState } from 'react';
@@ -18,6 +18,7 @@ export function Users() {
   const { data: roles } = useRoles();
   const setRole = useSetUserRole();
   const ban = useBanUser();
+  const del = useDeleteUser();
   const [roleDraft, setRoleDraft] = useState<Record<string, string>>({});
 
   const roleOptions = (roles ?? []).map((r) => ({ value: r.code, label: `${r.name} (${r.code})` }));
@@ -70,22 +71,33 @@ export function Users() {
               render: (v: string) => v.slice(0, 10),
             },
             {
-              title: '', key: 'actions', width: 100,
-              render: (_: unknown, row: UserRow) =>
-                has('user:ban') ? (
-                  row.banned ? (
-                    <Button size="small" type="link" onClick={() => ban.mutate({ id: row.id, banned: false })}>
-                      {t('users.unban')}
-                    </Button>
-                  ) : (
+              title: '', key: 'actions', width: 160,
+              render: (_: unknown, row: UserRow) => (
+                <span className="flex gap-1">
+                  {has('user:ban') && (
+                    row.banned ? (
+                      <Button size="small" type="link" onClick={() => ban.mutate({ id: row.id, banned: false })}>
+                        {t('users.unban')}
+                      </Button>
+                    ) : (
+                      <Popconfirm
+                        title={t('users.banConfirm')}
+                        onConfirm={() => ban.mutate({ id: row.id, banned: true })}
+                      >
+                        <Button size="small" type="link" danger>{t('users.ban')}</Button>
+                      </Popconfirm>
+                    )
+                  )}
+                  {has('user:delete') && (
                     <Popconfirm
-                      title={t('users.banConfirm')}
-                      onConfirm={() => ban.mutate({ id: row.id, banned: true })}
+                      title={t('users.deleteConfirm')}
+                      onConfirm={() => del.mutate(row.id, { onSuccess: () => message.success(t('users.deleted')) })}
                     >
-                      <Button size="small" type="link" danger>{t('users.ban')}</Button>
+                      <Button size="small" type="link" danger>{t('users.delete')}</Button>
                     </Popconfirm>
-                  )
-                ) : null,
+                  )}
+                </span>
+              ),
             },
           ]}
         />

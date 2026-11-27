@@ -25,6 +25,7 @@ export const ALL_PERMISSIONS = [
   { code: 'user:read', name: '查看用户', description: '查看用户列表', group: 'system' },
   { code: 'user:role', name: '分配角色', description: '修改用户角色', group: 'system' },
   { code: 'user:ban', name: '封禁用户', description: '封禁/解封用户', group: 'system' },
+  { code: 'user:delete', name: '删除用户', description: '删除用户及其会话数据', group: 'system' },
   { code: 'role:read', name: '查看角色', description: '查看角色列表', group: 'system' },
   { code: 'role:manage', name: '管理角色', description: '新建/编辑/删除角色及分配权限', group: 'system' },
   { code: 'permission:read', name: '查看权限', description: '查看权限列表', group: 'system' },
@@ -64,6 +65,18 @@ export async function seedRbac() {
   if (guestRole) {
     await db.delete(schema.rolePermissions).where(eq(schema.rolePermissions.roleId, guestRole.id));
   }
+}
+
+/**
+ * 系统里"可用"管理员数量（role=admin 且未封禁）。
+ * 用于防止把最后一个管理员降级/封禁/删除导致系统无人可管。
+ */
+export async function countActiveAdmins(excludeUserId?: string): Promise<number> {
+  const rows = await db
+    .select({ id: schema.users.id })
+    .from(schema.users)
+    .where(and(eq(schema.users.role, 'admin'), eq(schema.users.banned, false)));
+  return rows.filter((r) => r.id !== excludeUserId).length;
 }
 
 /**
