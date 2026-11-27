@@ -29,15 +29,32 @@ export const ALL_PERMISSIONS = [
   { code: 'role:read', name: '查看角色', description: '查看角色列表', group: 'system' },
   { code: 'role:manage', name: '管理角色', description: '新建/编辑/删除角色及分配权限', group: 'system' },
   { code: 'permission:read', name: '查看权限', description: '查看权限列表', group: 'system' },
+  { code: 'permission:manage', name: '管理权限', description: '新增/编辑/删除权限点', group: 'system' },
 ] as const;
 
-/** 幂等初始化：把内置权限与 guest/admin 角色写入库（不覆盖已有自定义数据） */
+/**
+ * 幂等初始化：
+ * - 内置权限用 onConflictDoNothing 补齐（新增代码定义的权限会在部署时自动加入），
+ *   但已被用户删除的自定义权限不会复活（不在 ALL_PERMISSIONS 里）。
+ * - 内置权限始终是 system=1（不可删）。迁移新增列时旧行默认 0，这里统一修正。
+ * - admin 角色自动获得所有当前权限（含新增的）；guest 首次创建时清空权限。
+ */
 export async function seedRbac() {
+  const builtinCodes = ALL_PERMISSIONS.map((p) => p.code);
+
+  // 1. 补齐缺失的内置权限（不复活被删的自定义权限）
   await db
     .insert(schema.permissions)
-    .values(ALL_PERMISSIONS.map((p) => ({ id: crypto.randomUUID(), ...p })))
+    .values(ALL_PERMISSIONS.map((p) => ({ id: crypto.randomUUID(), ...p, system: 1 })))
     .onConflictDoNothing({ target: schema.permissions.code });
 
+  // 2. 修正历史数据：迁移新增 system 列时旧行默认为 0
+  await db
+    .update(schema.permissions)
+    .set({ system: 1 })
+    .where(inArray(schema.permissions.code, builtinCodes));
+
+  // 3. 内置角色（返回非 null 表示本次新建）
   const [admin] = await db
     .insert(schema.roles)
     .values({ id: crypto.randomUUID(), code: 'admin', name: '管理员', description: '拥有全部权限', system: 1 })
@@ -49,11 +66,11 @@ export async function seedRbac() {
     .onConflictDoNothing({ target: schema.roles.code })
     .returning();
 
-  // onConflictDoNothing 时 returning 为空，重新查一次
   const roles = await db.select().from(schema.roles).where(inArray(schema.roles.code, ['admin', 'guest']));
   const adminRole = admin ?? roles.find((r) => r.code === 'admin');
   const guestRole = guest ?? roles.find((r) => r.code === 'guest');
 
+  // 4. admin 恒有全部当前权限（含本次新增的），onConflict 不覆盖已有
   if (adminRole) {
     const allPerms = await db.select({ id: schema.permissions.id }).from(schema.permissions);
     await db
@@ -61,9 +78,9 @@ export async function seedRbac() {
       .values(allPerms.map((p) => ({ roleId: adminRole.id, permissionId: p.id })))
       .onConflictDoNothing();
   }
-  // guest 无任何权限：确保清空（内置角色以本代码为准）
-  if (guestRole) {
-    await db.delete(schema.rolePermissions).where(eq(schema.rolePermissions.roleId, guestRole.id));
+  // 5. guest 首次创建时确保无权限（内置角色不可在 UI 编辑，保持空即可）
+  if (guest) {
+    await db.delete(schema.rolePermissions).where(eq(schema.rolePermissions.roleId, guest.id));
   }
 }
 

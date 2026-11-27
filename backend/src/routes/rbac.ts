@@ -12,6 +12,7 @@
  * - DELETE /admin/roles/:id     删除自定义角色（role:manage）
  * - PUT  /admin/roles/:id/permissions  设置角色权限（role:manage）
  * - GET  /admin/permissions     权限列表（permission:read）
+ * - POST/PATCH/DELETE /admin/permissions  权限 CRUD（permission:manage，内置权限不可删）
  */
 import type { FastifyInstance } from 'fastify';
 import { and, eq, inArray } from 'drizzle-orm';
@@ -20,7 +21,7 @@ import { db, schema } from '../db/index.js';
 import { requireAuth, requirePermission } from '../lib/context.js';
 import { Errors } from '../lib/errors.js';
 import { parseBody, parseParams } from '../middleware/validation.js';
-import { ALL_PERMISSIONS, countActiveAdmins, permissionsForUser } from '../services/rbac.service.js';
+import { countActiveAdmins, permissionsForUser } from '../services/rbac.service.js';
 
 const idParam = z.object({ id: z.string().min(1) });
 
@@ -196,10 +197,43 @@ export async function rbacRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  // ---- 权限列表（只读，权限码由代码定义）----
+  // ---- 权限管理（CRUD）----
   app.get('/admin/permissions', { onRequest: [requirePermission('permission:read')] }, async () => {
-    const rows = await db.select().from(schema.permissions).orderBy(schema.permissions.group, schema.permissions.code);
-    // ALL_PERMISSIONS 作为权威定义，库里缺的补出来（seed 已处理，这里兜底）
-    return rows.length ? rows : ALL_PERMISSIONS;
+    return db.select().from(schema.permissions).orderBy(schema.permissions.group, schema.permissions.code);
+  });
+
+  const permissionSchema = z.object({
+    code: z.string().min(1).max(100).regex(/^[a-z0-9:_-]+$/, '权限码只能含小写字母、数字、冒号、下划线和连字符'),
+    name: z.string().min(1).max(50),
+    description: z.string().max(200).default(''),
+    group: z.string().min(1).max(50).default('general'),
+  });
+
+  app.post('/admin/permissions', { onRequest: [requirePermission('permission:manage')] }, async (req) => {
+    const input = parseBody(permissionSchema, req);
+    await db.insert(schema.permissions).values({ id: crypto.randomUUID(), ...input, system: 0 });
+    return { ok: true };
+  });
+
+  app.patch('/admin/permissions/:id', { onRequest: [requirePermission('permission:manage')] }, async (req) => {
+    const { id } = parseParams(idParam, req);
+    const input = parseBody(permissionSchema.partial(), req);
+    const [perm] = await db.select().from(schema.permissions).where(eq(schema.permissions.id, id)).limit(1);
+    if (!perm) throw Errors.notFound('Permission not found');
+    if (perm.system === 1 && input.code !== undefined && input.code !== perm.code) {
+      throw Errors.badRequest('Built-in permission code cannot be changed');
+    }
+    await db.update(schema.permissions).set(input).where(eq(schema.permissions.id, id));
+    return { ok: true };
+  });
+
+  app.delete('/admin/permissions/:id', { onRequest: [requirePermission('permission:manage')] }, async (req) => {
+    const { id } = parseParams(idParam, req);
+    const [perm] = await db.select().from(schema.permissions).where(eq(schema.permissions.id, id)).limit(1);
+    if (!perm) throw Errors.notFound('Permission not found');
+    if (perm.system === 1) throw Errors.badRequest('Built-in permissions cannot be deleted');
+    // role_permissions 有级联删除，删权限会自动清掉角色关联
+    await db.delete(schema.permissions).where(eq(schema.permissions.id, id));
+    return { ok: true };
   });
 }

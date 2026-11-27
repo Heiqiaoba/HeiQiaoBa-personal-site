@@ -77,6 +77,8 @@ export const permissions = pgTable('permissions', {
   name: text('name').notNull(),
   description: text('description').notNull().default(''),
   group: text('group').notNull().default('general'),
+  /** 1=内置权限（不可删除/改 code），由 ALL_PERMISSIONS 定义 */
+  system: integer('system').notNull().default(0),
 });
 
 /** RBAC：角色。system=true 的内置角色不可删除。 */

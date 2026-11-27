@@ -43,6 +43,13 @@
       "when": 1795767210994,
       "tag": "0005_dazzling_millenium_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795769420503,
+      "tag": "0006_fresh_spacker_dave",
+      "breakpoints": true
     }
   ]
 }

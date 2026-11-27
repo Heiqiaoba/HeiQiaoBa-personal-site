@@ -8,7 +8,7 @@ import {
   useCreateRole, useDeleteRole, usePermissionsList, useRoles, useUpdateRole, type RoleRow,
 } from '@/api/rbac';
 import {
-  Button, Checkbox, Collapse, Form, Input, Modal, Popconfirm, Table, Tag, Typography, message,
+  Button, Checkbox, Form, Input, Modal, Popconfirm, Table, Tag, Typography, message,
 } from 'antd';
 import { useState } from 'react';
 
@@ -61,11 +61,28 @@ export function Roles() {
   };
 
   // 按 group 分组展示权限复选框
-  const grouped = (permissions ?? []).reduce<Record<string, typeof permissions>>((acc, p) => {
+  const grouped = (permissions ?? []).reduce<Record<string, NonNullable<typeof permissions>[number][]>>((acc, p) => {
     if (!p) return acc;
     (acc[p.group] ??= []).push(p);
     return acc;
   }, {});
+
+  /** 分组全选/取消 */
+  const toggleGroup = (ids: string[], selectAll: boolean) => {
+    setChecked((prev) =>
+      selectAll
+        ? Array.from(new Set([...prev, ...ids]))
+        : prev.filter((id) => !ids.includes(id)),
+    );
+  };
+  /** 分组反选 */
+  const invertGroup = (ids: string[]) => {
+    setChecked((prev) => {
+      const next = new Set(prev);
+      for (const id of ids) (next.has(id) ? next.delete(id) : next.add(id));
+      return Array.from(next);
+    });
+  };
 
   return (
     <div className="mx-auto max-w-[1000px] px-6 py-10">
@@ -93,7 +110,7 @@ export function Roles() {
               render: (_: unknown, r: RoleRow) =>
                 canManage && !r.system ? (
                   <span className="flex gap-1">
-                    <Button size="small" type="link" onClick={() => openEdit(r)}>{t('admin.edit')}</Button>
+                    <Button size="small" type="link" onClick={() => openEdit(r)}>{t('roles.editBtn')}</Button>
                     <Popconfirm title={t('roles.deleteConfirm')} onConfirm={() => remove.mutate(r.id)}>
                       <Button size="small" type="link" danger>{t('admin.delete')}</Button>
                     </Popconfirm>
@@ -127,17 +144,32 @@ export function Roles() {
         </Form>
         <Text type="secondary">{t('roles.permSelect')}</Text>
         <div className="mt-2 max-h-64 overflow-auto rounded-lg border border-gray-100 p-3">
-          {Object.entries(grouped).map(([group, list]) => (
-            <div key={group} className="mb-2">
-              <Text strong className="!text-xs">{group}</Text>
-              <Checkbox.Group
-                className="ml-2"
-                value={checked}
-                onChange={setChecked}
-                options={(list ?? []).map((p) => ({ value: p.id, label: `${p.name} (${p.code})` }))}
-              />
-            </div>
-          ))}
+          {Object.entries(grouped).map(([group, list]) => {
+            const ids = list.map((p) => p.id);
+            const allChecked = ids.length > 0 && ids.every((id) => checked.includes(id));
+            return (
+              <div key={group} className="mb-3 border-b border-gray-50 pb-2 last:border-0">
+                <div className="mb-1 flex items-center gap-2">
+                  <Checkbox
+                    checked={allChecked}
+                    indeterminate={!allChecked && ids.some((id) => checked.includes(id))}
+                    onChange={(e) => toggleGroup(ids, e.target.checked)}
+                  >
+                    <Text strong className="!text-xs">{group}</Text>
+                  </Checkbox>
+                  <Button size="small" type="link" className="!px-1 !text-xs" onClick={() => invertGroup(ids)}>
+                    {t('roles.invert')}
+                  </Button>
+                </div>
+                <Checkbox.Group
+                  className="ml-6"
+                  value={checked}
+                  onChange={setChecked}
+                  options={list.map((p) => ({ value: p.id, label: `${p.name} (${p.code})` }))}
+                />
+              </div>
+            );
+          })}
         </div>
       </Modal>
     </div>

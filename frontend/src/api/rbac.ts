@@ -28,7 +28,37 @@ export type PermissionRow = {
   name: string;
   description: string;
   group: string;
+  system: boolean;
 };
+
+export function useCreatePermission() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: (input: { code: string; name: string; description: string; group: string }) =>
+      api.post('/admin/permissions', input),
+    onSuccess: invalidate,
+  });
+}
+export function useUpdatePermission() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: ({ id, ...input }: {
+      id: string;
+      code?: string;
+      name?: string;
+      description?: string;
+      group?: string;
+    }) => api.patch(`/admin/permissions/${id}`, input),
+    onSuccess: invalidate,
+  });
+}
+export function useDeletePermission() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/admin/permissions/${id}`),
+    onSuccess: invalidate,
+  });
+}
 
 export function useUsers() {
   return useQuery({ queryKey: ['rbac', 'users'], queryFn: () => api.get<UserRow[]>('/admin/users') });
