@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- 本文件仅用于开发服务器；生产环境由后端动态生成 /sitemap.xml，
+     包含全部已发布笔记，域名取自 BETTER_AUTH_URL。 -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://heiqiaoba.com/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://heiqiaoba.com/notes</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://heiqiaoba.com/projects</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://heiqiaoba.com/about</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <!-- 文章页由后端 /api/v1/notes 动态提供，静态 sitemap 只包含固定路由。
-       若要包含所有文章，见 docs/roadmap.md 的 SSR/预渲染方案。 -->
 </urlset>

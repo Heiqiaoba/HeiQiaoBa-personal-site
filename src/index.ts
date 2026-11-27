@@ -19,15 +19,17 @@ interface Env {
   BACKEND_URL: string;
 }
 
-/** 需要转发到后端的路径前缀（精确 /feed.xml 单独处理） */
+/** 需要转发到后端的路径前缀（精确路径在下方单独处理） */
 const PROXY_PREFIXES = ['/api', '/uploads/'];
+/** 精确匹配才转发的路径：RSS / 站点地图 / robots（均由后端动态生成） */
+const PROXY_EXACT = new Set(['/feed.xml', '/sitemap.xml', '/robots.txt']);
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const isProxyRoute =
       PROXY_PREFIXES.some((prefix) => url.pathname.startsWith(prefix)) ||
-      url.pathname === '/feed.xml';
+      PROXY_EXACT.has(url.pathname);
 
     if (isProxyRoute) {
       const backend = (env.BACKEND_URL || '').replace(/\/+$/, '');

@@ -130,6 +130,10 @@ DATABASE_URL='<Neon连接串>' node dist/db/create-admin.js <email> <name> '<pas
 - **账户设置**：顶部导航「账户设置」（所有登录用户可见，可改密码）；旧 `/write/settings` 已指向同一页面
 - 迁移 `0005` 自动建 `permissions`/`roles`/`role_permissions` 表，种子数据由 `migrate.ts` 幂等写入
 
+### SEO：动态 sitemap 与 robots
+
+`/sitemap.xml` 与 `/robots.txt` 由后端动态生成（[`backend/src/routes/sitemap.ts`](../backend/src/routes/sitemap.ts)），域名取 `BETTER_AUTH_URL`，包含全部已发布笔记与 lastmod；Cloudflare Worker 把这两个路径代理到后端。前端 `public/` 下的同名文件仅供本地 dev server 使用（不含旧域名和文章）。
+
 ### 冷启动无感提示（前端）
 
 针对 Render 免费层休眠唤醒，前端内置了全局监测（`src/lib/backendWake.ts` + `components/BackendWakeMonitor.tsx`）：

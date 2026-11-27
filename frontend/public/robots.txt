@@ -1,4 +1,4 @@
+# 本文件仅用于开发服务器；生产环境由后端动态生成 /robots.txt，
+# 域名取自 BETTER_AUTH_URL，不会再写死旧域名。
 User-agent: *
 Allow: /
-
-Sitemap: https://heiqiaoba.com/sitemap.xml

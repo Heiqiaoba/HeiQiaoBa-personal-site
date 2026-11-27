@@ -28,6 +28,7 @@ import { noteRoutes } from './routes/notes.js';
 import { telemetryRoutes } from './routes/telemetry.js';
 import { uploadRoutes } from './routes/upload.js';
 import { rbacRoutes } from './routes/rbac.js';
+import { sitemapRoutes } from './routes/sitemap.js';
 import { UPLOAD_DIR } from './lib/storage.js';
 
 /**
@@ -160,8 +161,9 @@ export async function buildApp() {
   // 统一错误处理
   app.setErrorHandler(errorHandler);
 
-  // RSS：挂在根路径 /feed.xml（不带 /api 前缀）
+  // RSS / 站点地图 / robots：挂在根路径（不带 /api 前缀）
   await feedRoutes(app);
+  await sitemapRoutes(app);
 
   // 业务路由统一挂到 /api/v1
   await app.register(
