@@ -19,6 +19,16 @@
 | API 文档 | http://localhost:3100/docs |
 | PostgreSQL | localhost:5433 |
 
+## 日常一键启动 / 关闭（本地开发）
+
+```bash
+./scripts/start.sh   # 一键启动：Colima → PostgreSQL → 后端 → 前端
+./scripts/stop.sh    # 一键关闭：前端 + 后端 + PostgreSQL
+```
+
+`start.sh` 会检查 Docker 引擎（Colima）是否运行，没有就自动启动；重复执行安全。
+`stop.sh` 默认保留 Colima（共享引擎，其他项目可能在用），彻底关闭可执行 `colima stop`。
+
 ## 首次启动
 
 ```bash
